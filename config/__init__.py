@@ -4,7 +4,7 @@
 # past 50 days of stock history to make a prediction about just the next day.
 history_points = 50
 num_data_columns = 5
-model_file = 'models/technical_model.h5'
-data_file = 'data/MSFT_daily.csv'
-prediction_analysis = 'analysis/predict_out.png'
-train_analysis = 'analysis/train_out.png'
+model_file = 'models/technical_model.h5' #TODO: dynamic file name
+data_file = 'data/MSFT_daily.csv' #TODO: dynamic stock symbol
+prediction_analysis = 'analysis/predict_out_%s.png'
+train_analysis = 'analysis/train_out_%s.png'

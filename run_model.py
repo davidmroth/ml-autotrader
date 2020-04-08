@@ -2,11 +2,12 @@ import utils.lazy as lazy_import
 import os.path as path
 import numpy as np
 import matplotlib.pyplot as plt
-import config
 
+import config
 load_model = lazy_import.lazy_callable( 'keras.models.load_model' )
 
 from utils import compute
+from utils.file import timestamp_file
 from utils.imports.dataset import from_csv
 
 
@@ -15,18 +16,18 @@ if not path.exists( config.model_file ):
 
 model = load_model( config.model_file )
 
-data_time, ohlcv_histories, technical_indicators, next_day_open_values, unscaled_y, y_normaliser = from_csv( config.data_file )
+data_time, ohlcv_histories, technical_indicators, next_day_close_values, unscaled_y, y_normaliser = from_csv( config.data_file )
 
 test_split = 0.9
 n = int( ohlcv_histories.shape[0] * test_split )
 
 ohlcv_train = ohlcv_histories[:n]
 tech_ind_train = technical_indicators[:n]
-y_train = next_day_open_values[:n]
+y_train = next_day_close_values[:n]
 
 ohlcv_test = ohlcv_histories[n:]
 tech_ind_test = technical_indicators[n:]
-y_test = next_day_open_values[n:]
+y_test = next_day_close_values[n:]
 
 unscaled_y_test = unscaled_y[n:]
 
@@ -53,6 +54,7 @@ for ohlcv, ind in zip( ohlcv_test[start: end], tech_ind_test[start: end] ):
     elif delta < -thresh:
         sells.append( ( x, price_today[0][0] ) )
 
+    #print( "X %s, ind: %s " % ( x, ind ) )
     x += 1
 
 print( f"buys: {len( buys )}" )
@@ -76,5 +78,5 @@ if len( sells ) > 0:
 # pred = plt.plot(y_predicted[start:end], label='predicted')
 
 plt.legend( ['Real', 'Predicted', 'Buy', 'Sell'] )
-plt.savefig( config.prediction_analysis )
+plt.savefig( timestamp_file( config.prediction_analysis ) )
 plt.show()

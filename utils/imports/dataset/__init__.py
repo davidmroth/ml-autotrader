@@ -55,21 +55,22 @@ def from_csv( csv_path ):
     dn = pd.DataFrame( data_normalised )
     print( "Data:", df.head() )
     print( "Normalized:", dn.head() )
+    exit()
     '''
 
-    # using the last {history_points} open close high low volume data points, predict the next open value
+    # using the last {history_points} open close high low volume data points, predict the next  value
     ohlcv_histories_normalised      = np.array( [data_normalised[i:i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
-    next_day_open_values_normalised = np.array( [data_normalised[:, 0][i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
-    next_day_open_values_normalised = np.expand_dims( next_day_open_values_normalised, -1 )
+    next_day_close_values_normalised = np.array( [data_normalised[:, 3][i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
+    next_day_close_values_normalised = np.expand_dims( next_day_close_values_normalised, -1 )
 
-    next_day_open_values = np.array( [data[:, 0][i + history_points].copy() for i in range( len( data ) - history_points)] )
-    next_day_open_values = np.expand_dims( next_day_open_values, -1 )
+    next_day_close_values = np.array( [data[:, 3][i + history_points].copy() for i in range( len( data ) - history_points)] )
+    next_day_close_values = np.expand_dims( next_day_close_values, -1 )
 
     date_time = np.array( [date_time[:, 0][i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
     date_time = np.expand_dims( date_time, -1 )
 
     y_normaliser = preprocessing.MinMaxScaler()
-    y_normaliser.fit( next_day_open_values )
+    y_normaliser.fit( next_day_close_values )
 
     technical_indicators = []
 
@@ -84,5 +85,5 @@ def from_csv( csv_path ):
     tech_ind_scaler = preprocessing.MinMaxScaler()
     technical_indicators_normalised = tech_ind_scaler.fit_transform( technical_indicators )
 
-    assert ohlcv_histories_normalised.shape[0] == next_day_open_values_normalised.shape[0] == technical_indicators_normalised.shape[0]
-    return date_time, ohlcv_histories_normalised, technical_indicators_normalised, next_day_open_values_normalised, next_day_open_values, y_normaliser
+    assert ohlcv_histories_normalised.shape[0] == next_day_close_values_normalised.shape[0] == technical_indicators_normalised.shape[0]
+    return date_time, ohlcv_histories_normalised, technical_indicators_normalised, next_day_close_values_normalised, next_day_close_values, y_normaliser

@@ -15,7 +15,7 @@ Dropout = lazy_import.lazy_callable( 'keras.layers.Dropout' )
 Activation = lazy_import.lazy_callable( 'keras.layers.Activation' )
 concatenate = lazy_import.lazy_callable( 'keras.layers.concatenate' )
 
-from datetime import datetime
+from utils.file import timestamp_file
 from utils.imports.dataset import from_csv
 
 
@@ -23,18 +23,18 @@ np.random.seed(4)
 tf.random.set_seed(4)
 
 # dataset
-date_time, ohlcv_histories, technical_indicators, next_day_open_values, unscaled_y, y_normaliser = from_csv( config.data_file )
+date_time, ohlcv_histories, technical_indicators, next_day_close_values, unscaled_y, y_normaliser = from_csv( config.data_file )
 
 test_split = 0.9
 n = int( ohlcv_histories.shape[0] * test_split )
 
 ohlcv_train = ohlcv_histories[:n]
 tech_ind_train = technical_indicators[:n]
-y_train = next_day_open_values[:n]
+y_train = next_day_close_values[:n]
 
 ohlcv_test = ohlcv_histories[n:]
 tech_ind_test = technical_indicators[n:]
-y_test = next_day_open_values[n:]
+y_test = next_day_close_values[n:]
 date_time_axis = date_time[n:]
 
 unscaled_y_test = unscaled_y[n:]
@@ -99,7 +99,7 @@ pred = plt.plot( date_time_axis[start:end], y_test_predicted[start:end], label='
 
 plt.gcf().set_size_inches( 22, 15, forward=True )
 plt.legend( ['Real', 'Predicted'] )
-plt.savefig( config.train_analysis )
+plt.savefig( timestamp_file( config.train_analysis ) )
 plt.show()
 
 model.save( config.model_file )
