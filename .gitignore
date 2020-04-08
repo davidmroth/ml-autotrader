@@ -110,3 +110,4 @@ venv.bak/
 
 # my ignores
 *.png
+models/*

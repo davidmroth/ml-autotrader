@@ -3,6 +3,7 @@ import utils.lazy as lazy_import
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
+import config
 
 # Lazy loading...
 optimizers = lazy_import.lazy_module( 'keras.optimizers' )
@@ -16,14 +17,13 @@ concatenate = lazy_import.lazy_callable( 'keras.layers.concatenate' )
 
 from datetime import datetime
 from utils.imports.dataset import from_csv
-from config import history_points, num_data_columns
 
 
 np.random.seed(4)
 tf.random.set_seed(4)
 
 # dataset
-date_time, ohlcv_histories, technical_indicators, next_day_open_values, unscaled_y, y_normaliser = from_csv('data/MSFT_daily.csv')
+date_time, ohlcv_histories, technical_indicators, next_day_open_values, unscaled_y, y_normaliser = from_csv( config.data_file )
 
 test_split = 0.9
 n = int( ohlcv_histories.shape[0] * test_split )
@@ -46,7 +46,7 @@ print( date_time_axis.shape )
 # model architecture
 
 # define two sets of inputs
-lstm_input = Input( shape=( history_points, num_data_columns ), name='lstm_input' )
+lstm_input = Input( shape=( config.history_points, config.num_data_columns ), name='lstm_input' )
 dense_input = Input( shape=( technical_indicators.shape[1], ), name='tech_input' )
 
 # the first branch operates on the first input
@@ -99,7 +99,7 @@ pred = plt.plot( date_time_axis[start:end], y_test_predicted[start:end], label='
 
 plt.gcf().set_size_inches( 22, 15, forward=True )
 plt.legend( ['Real', 'Predicted'] )
-plt.savefig('analysis/train_out.png')
+plt.savefig( config.train_analysis )
 plt.show()
 
-model.save( f'models/technical_model.h5' )
+model.save( config.model_file )

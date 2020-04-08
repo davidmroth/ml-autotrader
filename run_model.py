@@ -1,16 +1,21 @@
+import utils.lazy as lazy_import
+import os.path as path
 import numpy as np
 import matplotlib.pyplot as plt
+import config
 
-from keras.models import load_model
+load_model = lazy_import.lazy_callable( 'keras.models.load_model' )
 
 from utils import compute
 from utils.imports.dataset import from_csv
-from config import history_points
 
 
-model = load_model( 'models/technical_model.h5' )
+if not path.exists( config.model_file ):
+    raise Exception( "Model ('%s') does not exist! Please train." % config.model_file )
 
-data_time, ohlcv_histories, technical_indicators, next_day_open_values, unscaled_y, y_normaliser = from_csv( 'data/MSFT_daily.csv' )
+model = load_model( config.model_file )
+
+data_time, ohlcv_histories, technical_indicators, next_day_open_values, unscaled_y, y_normaliser = from_csv( config.data_file )
 
 test_split = 0.9
 n = int( ohlcv_histories.shape[0] * test_split )
@@ -71,5 +76,5 @@ if len( sells ) > 0:
 # pred = plt.plot(y_predicted[start:end], label='predicted')
 
 plt.legend( ['Real', 'Predicted', 'Buy', 'Sell'] )
-plt.savefig('analysis/predict_out.png')
+plt.savefig( config.prediction_analysis )
 plt.show()
