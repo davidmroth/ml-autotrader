@@ -84,7 +84,7 @@ plt.add_note(
         r'Symbol: %s' % ( config.stock_symbol, ),
         r'MSE: %.2f' % ( scaled_mse, ),
         r'Epochs: %d' % ( config.epochs, ),
-        r'History Points: %d' % (config.history_points, )
+        r'History Points: %d' % ( config.history_points, )
     )
 )
 plt.create()

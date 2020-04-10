@@ -21,4 +21,4 @@ trade_threshold = 0.1
 # Model hyperparamters
 history_points = 50 # Can't be less than 13
 batch_size = 64
-epochs = 3 # Number of training runs ( typlically, the more the better )
+epochs = 50 # Number of training runs ( typlically, the more the better )

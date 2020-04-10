@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
+import ml_trader.utils as utils
 import ml_trader.config as config
 import ml_trader.utils.file as file
 
@@ -41,28 +42,17 @@ class Plot:
             plt.plot( y_axis[self.start:self.end], label=label )
 
         else:
-            date = x_axis[self.start:self.end]
+            x_axis = x_axis[self.start:self.end]
+            x_axis = np.array( [datetime.datetime.fromtimestamp( i ) for i in x_axis] )
 
-            fig, ax = plt.subplots()
-            plt.plot( date, y_axis[self.start:self.end], label=label )
+            ax = plt.gca()
+            plt.plot( x_axis, y_axis[self.start:self.end], label=label )
 
-            # format the ticks
-            ax.xaxis.set_major_locator( years )
-            ax.xaxis.set_major_formatter( yearsFmt )
-            ax.xaxis.set_minor_locator( months )
-
-            print( date )
-            print( type( date[0] ) )
-            print( date[-1] )
-
-            date = np.datetime64( date )
-            datemin = np.datetime64( date[0], 'Y')
-            datemax = np.datetime64( date[-1], 'Y') #+ np.timedelta64( 1, 'Y' )
-
-            print( datemin, datemax )
-            print( type( int( date[0] ) ) )
-            ax.set_xlim( datemin, datemax )
-            ax.format_xdata = mdates.DateFormatter( '%Y-%m-%d' )
+            xmin, xmax = ax.get_xlim()
+            custom_ticks = np.linspace( xmin, xmax, 10, dtype=int )
+            ax.set_xticks( custom_ticks )
+            ax.set_xticklabels( custom_ticks )
+            ax.xaxis.set_major_formatter( mdates.DateFormatter( '"%B %d, %Y"' ) )
 
     def plot_buys_and_sells( self, x_axis, x_index, y_axis, y_index, c, s, label=None ):
         plt.scatter(

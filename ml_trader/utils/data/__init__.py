@@ -63,7 +63,7 @@ def prepare( data ):
 
     # Get dates in a single column
     dates = np.array( [data[:, meta.column_index['date']][i + history_points].copy() for i in range( len( data ) - history_points)] )
-    dates = np.array( [utils.convert_to_datetime( i ) for i in dates] ) # Convert back to normal dates
+    #dates = np.array( [utils.convert_to_datetime( i ) for i in dates] ) # Convert back to normal dates
 
     technical_indicators_normalised = stock_indicators.get_technical_indicators( preprocessing.MinMaxScaler(), ohlcv_histories_normalised )
 
