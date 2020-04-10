@@ -4,6 +4,7 @@ import numpy as np
 import ml_trader.config as config
 import ml_trader.utils.file as file
 import ml_trader.utils.data.imports.get as get
+import ml_trader.utils.stock.indicators as stock_indicators
 
 from pprint import pprint
 from sklearn import preprocessing
@@ -13,21 +14,6 @@ from ml_trader.utils.compute import earnings
 
 
 def from_csv():
-    def calc_ema( values, time_period ):
-        if len( values ) < 13:
-            raise Exception( "ERROR: Please make sure 'config.history_points' is not less than 13. This is requried for exponential-moving-average (ema) formula.")
-
-        # https://www.investopedia.com/ask/answers/122314/what-exponential-moving-average-ema-formula-and-how-ema-calculated.asp
-        sma = np.mean( values[:, 3] )
-        ema_values = [sma]
-        k = 2 / ( 1 + time_period )
-
-        for i in range( len( his ) - time_period, len( his ) ):
-            close = his[i][3]
-            ema_values.append( close * k + ema_values[-1] * ( 1 - k ) )
-
-        return ema_values[-1]
-
     data = get.dataset()
 
     # The first day of trading that stock often looked anomalous due to the massively high volume (IPO).
@@ -81,11 +67,12 @@ def from_csv():
     y_normaliser = preprocessing.MinMaxScaler()
     y_normaliser.fit( next_day_close_values )
 
+    '''
     technical_indicators = []
 
     for his in ohlcv_histories_normalised:
         sma = np.mean( his[:, 3] ) # Note since we are using his[3] we are taking the SMA (Simple Moving Average) of the closing price
-        macd = calc_ema( his, 12 ) - calc_ema( his, 26 ) # Moving average convergence divergence
+        macd = indicator.calc_ema( his, 12 ) - indicator.calc_ema( his, 26 ) # Moving average convergence divergence
         technical_indicators.append( np.array( [sma] ) )
         # technical_indicators.append(np.array([sma,macd,]))
 
@@ -93,6 +80,8 @@ def from_csv():
 
     tech_ind_scaler = preprocessing.MinMaxScaler()
     technical_indicators_normalised = tech_ind_scaler.fit_transform( technical_indicators )
+    '''
+    technical_indicators_normalised = stock_indicators.get_technical_indicators( preprocessing.MinMaxScaler(), ohlcv_histories_normalised )
 
     assert ohlcv_histories_normalised.shape[0] == next_day_close_values_normalised.shape[0] == technical_indicators_normalised.shape[0]
     return date_time, ohlcv_histories_normalised, technical_indicators_normalised, next_day_close_values_normalised, next_day_close_values, y_normaliser

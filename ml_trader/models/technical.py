@@ -21,12 +21,14 @@ class Technical_Model:
 
     def build( self, input_size ):
         print( " **Initializing model..." )
+
         # define two sets of inputs
         lstm_input = Input( shape=( config.history_points, config.column_count ), name='lstm_input' )
         dense_input = Input( shape=( input_size, ), name='tech_input' )
 
         # the first branch operates on the first input
-        x = LSTM( config.history_points, name='lstm_0' )( lstm_input )
+        #x = LSTM( config.history_points, name='lstm_0' )( lstm_input )
+        x = LSTM( 50, name='lstm_0' )( lstm_input )
         x = Dropout( 0.2, name='lstm_dropout_0')( x )
         lstm_branch = Model( inputs=lstm_input, outputs=x )
 

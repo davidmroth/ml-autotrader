@@ -20,10 +20,12 @@ next_day_close_values, unscaled_y, y_normaliser = from_csv()
 test_split = 0.9
 n = int( ohlcv_histories.shape[0] * test_split )
 
+# Training data
 ohlcv_train = ohlcv_histories[:n]
 tech_ind_train = technical_indicators[:n]
 y_train = next_day_close_values[:n]
 
+# Test data
 ohlcv_test = ohlcv_histories[n:]
 tech_ind_test = technical_indicators[n:]
 y_test = next_day_close_values[n:]

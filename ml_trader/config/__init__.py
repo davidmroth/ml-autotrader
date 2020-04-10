@@ -7,7 +7,9 @@ stock_symbol = 'msft'
 dataset_type = 'daily'
 
 # Describe Data
-column_header = [ 'date', 'open', 'high', 'low', 'close', 'volume' ]
+column_header = {
+    'date': 0, 'open':1, 'high':2, 'low':3, 'close':4, 'volume':5
+}
 column_count = 5 # Data shape expected
 
 # File paths
@@ -18,8 +20,8 @@ train_analysis = 'data/analysis/{}_out_%s.png'
 
 
 # Trade Logic
-purchase_amt = 1000
-trade_threshold = 2
+purchase_amt = 10
+trade_threshold = 0.1
 
 
 # Model hyperparamters
