@@ -56,8 +56,8 @@ def dataset( *args, **kargs ):
         raise Exception( "Error!" )
 
     #DEBUG:
-    print( "\nDataset for {}:".format( config.stock_symbol ) )
-    pprint( data.head( 10 ) )
+    print( "\nDataset for {} (first 50 rows):".format( config.stock_symbol.upper() ) )
+    pprint( data.head( 50 ) )
     print( "\n\n" )
 
     return data

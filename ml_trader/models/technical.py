@@ -14,8 +14,12 @@ Activation = lazy_import.lazy_callable( 'keras.layers.Activation' )
 concatenate = lazy_import.lazy_callable( 'keras.layers.concatenate' )
 load_model = lazy_import.lazy_callable( 'keras.models.load_model' )
 
+from keras.callbacks import EarlyStopping
+
 
 class Technical_Model:
+    model = False
+
     def __init__( self, y_normaliser ):
         # Used to invert normalision applied to predictions
         self.y_normaliser = y_normaliser
@@ -58,10 +62,16 @@ class Technical_Model:
         print( model.summary() )
         print( "******************************************************\n\n" )
 
-        if model.layers[1].output_shape[1] != config.history_points:
+        if model.layers[1].output_shape[1] != config.history_points or model.layers[1].output_shape[2] != meta.column_count:
             raise Exception( "*** Please retrain this model. Config is out of sync with the saved model!" )
 
         return model
+
+    def get_model( self ):
+        return self.model
+
+    def score( self, x, y ):
+        return self.model.evaluate( x, y, batch_size=config.batch_size )
 
     def load( self ):
         if not file.exists( config.model_filepath ):
@@ -74,10 +84,15 @@ class Technical_Model:
         file.create_path_if_needed( config.model_filepath )
         self.model.save( config.model_filepath )
 
-    def train( self, x, y ):
+    def train( self, x, y, x_test, y_test ):
         # x = new input data
         # y = predicted data
-        self.model.fit( x=x, y=y, batch_size=32, epochs=config.epochs, shuffle=True, validation_split=0.1 )
+        return self.model.fit( x=x, y=y, \
+            batch_size=config.batch_size, epochs=config.epochs, \
+            shuffle=False, validation_split=0.1, \
+            callbacks=[EarlyStopping(monitor='val_loss', patience=10)], \
+            validation_data=(x_test, y_test), \
+            verbose=1 )
 
     def predict( self, y ):
         y_predicted = self.model.predict( y )

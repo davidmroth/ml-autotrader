@@ -11,10 +11,10 @@ from ml_trader.utils.data import Preprocess
 
 
 '''
-Preprocess data for ML model
+Retreive & preprocess data for ML model
 '''
 preprocess = Preprocess( 0.9 )
-unscaled_y_test, date_time_axis = preprocess.get_unscaled_data()
+unscaled_y_test = preprocess.get_unscaled_data()
 ohlcv_train, tech_ind_train, y_train = preprocess.get_training_data()
 ohlcv_test, tech_ind_test, y_test = preprocess.get_test_data()
 y_normaliser = preprocess.get_y_normalizer()
@@ -37,7 +37,7 @@ x = -1
 start = 0
 end = -1
 
-predicted_price_tomorrow_array = np.array([None])
+predicted_price_tomorrow_array = np.array( [None] )
 
 for ohlcv, ind in zip( ohlcv_test[start: end], tech_ind_test[start: end] ):
     normalised_price_today = ohlcv[-1][0]
@@ -48,6 +48,7 @@ for ohlcv, ind in zip( ohlcv_test[start: end], tech_ind_test[start: end] ):
     predicted_price_tomorrow_array = np.append( predicted_price_tomorrow_array, predicted_price_tomorrow )
 
     delta = predicted_price_tomorrow - price_today
+    print( delta )
 
     # Buy / Sell Logic
     if delta > thresh:
@@ -76,7 +77,6 @@ print( "Mean Squared Error (MSE): %.2f" % scaled_mse )
 '''
 DEBUG
 '''
-print( date_time_axis.shape )
 print( unscaled_y_test.shape )
 print( predicted_price_tomorrow_array.shape )
 
@@ -85,8 +85,8 @@ print( predicted_price_tomorrow_array.shape )
 Plot
 '''
 plt = Plot( 'Simulation', start=0, end=-1, legend=['Real', 'Predicted', 'Buy', 'Sell'] )
-plt.graph( x_axis=date_time_axis, y_axis=unscaled_y_test, label='Real' )
-plt.graph( x_axis=date_time_axis, y_axis=predicted_price_tomorrow_array, label='Predicted' )
+plt.graph( y_axis=unscaled_y_test, label='Real' )
+plt.graph( y_axis=predicted_price_tomorrow_array, label='Predicted' )
 plt.add_note(
     (
         r'Date: %s' % ( time.strftime( "%m/%d/%Y %H:%M:%S" ) ),
@@ -97,12 +97,10 @@ plt.add_note(
     )
 )
 
-'''
 if len( buys ) > 0:
     plt.plot_buys_and_sells( x_axis=buys, x_index=0, y_axis=buys, y_index=1 , c='#00ff00', s=50 )
 
 if len( sells ) > 0:
     plt.plot_buys_and_sells( x_axis=sells, x_index=0, y_axis=sells, y_index=1 , c='#ff0000', s=50 )
-'''
 
 plt.create()

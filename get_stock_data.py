@@ -8,5 +8,4 @@ if __name__ == "__main__":
     parser.add_argument( 'time_window', type=str, choices=['intraday', 'daily', 'daily_adj'], help="the time period you want to download the stock history for" )
 
     namespace = parser.parse_args()
-    print( namespace )
     get.dataset( **vars( namespace ) )

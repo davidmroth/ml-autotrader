@@ -7,49 +7,69 @@ import ml_trader.config as config
 from ml_trader.models.technical import Technical_Model
 from ml_trader.utils.data.imports import from_csv
 from ml_trader.utils.analysis.plot import Plot
-
+from ml_trader.utils.data import Preprocess
 
 np.random.seed( 4 )
 tf.random.set_seed( 4 )
 
 
-# dataset
-date_time, ohlcv_histories, technical_indicators, \
+'''
+Retreive & preprocess data for ML model
+'''
+preprocess = Preprocess( 0.9 )
+# Training data
+ohlcv_train, tech_ind_train, y_train = preprocess.get_training_data()
+# Test data
+ohlcv_test, tech_ind_test, y_test = preprocess.get_test_data()
+# Other
+unscaled_y_test, technical_indicators = preprocess.get_unscaled_data()
+y_normaliser = preprocess.get_y_normalizer()
+
+'''
+# dataset (open-high-low-close-volume (ohlcv))
+ohlcv_histories, technical_indicators, \
 next_day_close_values, unscaled_y, y_normaliser = from_csv()
 
 test_split = 0.9
 n = int( ohlcv_histories.shape[0] * test_split )
 
 # Training data
-ohlcv_train = ohlcv_histories[:n]
-tech_ind_train = technical_indicators[:n]
-y_train = next_day_close_values[:n]
+ohlcv_train = ohlcv_histories[:n] # All historical data
+tech_ind_train = technical_indicators[:n] # Technical indicators
+y_train = next_day_close_values[:n] # Label
 
 # Test data
 ohlcv_test = ohlcv_histories[n:]
 tech_ind_test = technical_indicators[n:]
 y_test = next_day_close_values[n:]
-date_time_axis = date_time[n:]
 
 unscaled_y_test = unscaled_y[n:]
+'''
 
 print( ohlcv_train.shape )
 print( ohlcv_test.shape )
-print( date_time_axis.shape )
-
+print( technical_indicators.shape[1] )
+exit()
 
 # Train model
 technical_model = Technical_Model( y_normaliser ) # Instantiate class
 technical_model.build( technical_indicators.shape[1] ) # Build model
-technical_model.train( [ohlcv_train, tech_ind_train], y_train) # Train model
+history = technical_model.train( [ohlcv_train, tech_ind_train], y_train, [ohlcv_test, tech_ind_test], y_test ) # Train model
 technical_model.save() # Save trained model for later use
 
 
 # evaluation
+y_train_predicted = technical_model.predict( [ohlcv_train, tech_ind_train] )
 y_test_predicted = technical_model.predict( [ohlcv_test, tech_ind_test] )
-y_predicted = technical_model.predict( [ohlcv_histories, technical_indicators] )
+#y_predicted = technical_model.predict( [ohlcv_histories, technical_indicators] )
 
-assert unscaled_y_test.shape == y_test_predicted.shape == date_time_axis.shape
+
+print( 'y_train_predicted:', len( y_train_predicted ) )
+print( 'y_test_predicted:', len( y_test_predicted ) )
+print( '-> total:', len( y_train_predicted ) + len( y_test_predicted ) )
+#print( 'y_predicted:', len( y_predicted ) )
+
+assert unscaled_y_test.shape == y_test_predicted.shape
 
 
 # Score
@@ -77,10 +97,11 @@ wildly around the regression line, so 6.08 is as good as it gets (and is in
 fact, the line of best fit).
 '''
 
+
 # Plot
-plt = Plot( 'Training', start=0, end=-1, legend=['Real', 'Predicted'] )
-plt.graph( x_axis=date_time_axis, y_axis=unscaled_y_test, label='Real' )
-plt.graph( x_axis=date_time_axis, y_axis=y_test_predicted, label='Predicted' )
+plt = Plot( 'Training', start=0, end=-1, xlabel='Date', ylabel='Stock Price' )
+plt.graph( y_axis=unscaled_y_test, label='Real' )
+plt.graph( y_axis=y_test_predicted, label='Predicted' )
 plt.add_note(
     (
         r'Date: %s' % ( time.strftime( "%m/%d/%Y %H:%M:%S" ) ),
@@ -90,4 +111,9 @@ plt.add_note(
         r'History Points: %d' % (config.history_points, )
     )
 )
+plt.create()
+
+plt = Plot( 'Training_loss', start=0, end=-1, xlabel='Epochs', ylabel='Loss' )
+plt.graph( y_axis=history.history['loss'], label='Train Loss' )
+plt.graph( y_axis=history.history['val_loss'], label='Test Loss' )
 plt.create()

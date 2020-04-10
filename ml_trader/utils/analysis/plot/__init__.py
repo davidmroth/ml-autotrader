@@ -5,7 +5,9 @@ import ml_trader.utils.file as file
 
 
 class Plot:
-    def __init__( self, name, start, end, legend  ):
+    def __init__( self, name, start, end, legend=None, xlabel=None, ylabel=None  ):
+        self.xlabel = xlabel
+        self.ylabel = ylabel
         self.name = name
         self.legend = legend
         self.start = start
@@ -26,8 +28,11 @@ class Plot:
             bbox=props
         )
 
-    def graph( self, x_axis, y_axis, label=None ):
-        plt.plot( x_axis[self.start:self.end], y_axis[self.start:self.end], label=label )
+    def graph( self, y_axis, x_axis=None, label=None ):
+        if ( not x_axis ):
+            plt.plot( y_axis[self.start:self.end], label=label )
+        else:
+            plt.plot( x_axis[self.start:self.end], y_axis[self.start:self.end], label=label )
 
     def plot_buys_and_sells( self, x_axis, x_index, y_axis, y_index, c, s, label=None ):
         plt.scatter(
@@ -41,6 +46,14 @@ class Plot:
         file.create_path_if_needed( file_path )
 
         plt.gcf().set_size_inches( 22, 15, forward=True )
-        plt.legend( self.legend )
+
+        if self.legend:
+            plt.legend( self.legend )
+
+        else:
+            plt.legend()
+        plt.xlabel( self.xlabel )
+        plt.ylabel( self.ylabel )
         plt.savefig( file_path )
         plt.show()
+        plt.clf()
