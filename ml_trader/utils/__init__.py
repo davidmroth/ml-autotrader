@@ -7,5 +7,6 @@ def convert_to_timestamp( x ):
     return time.mktime( x.to_pydatetime().timetuple() )
 
 def convert_to_datetime( x ):
+    """Convert unix time (int) to date"""
     value = datetime.datetime.fromtimestamp( x )
     return f'{value:%Y-%m-%d}'

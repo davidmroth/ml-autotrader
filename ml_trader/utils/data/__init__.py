@@ -1,17 +1,18 @@
 import pandas as pd
 import numpy as np
+import datetime
 
 import ml_trader.config as config
 import ml_trader.utils as utils
 import ml_trader.utils.file as file
 import ml_trader.utils.data.meta as meta
 import ml_trader.utils.stock.indicators as stock_indicators
+import ml_trader.utils.data.imports.get as get
 
 from pprint import pprint
 from sklearn import preprocessing
 
 from ml_trader.utils.compute import earnings
-from ml_trader.utils.data.imports import from_csv
 
 
 def prepare( data ):
@@ -25,9 +26,9 @@ def prepare( data ):
     data.sort_values( 'date', inplace=True, ascending=True )
     data['date'] = pd.to_datetime( data['date'] )
     data['date'] = data['date'].apply( utils.convert_to_timestamp )
-    #data['date'] = data['date'].apply( utils.convert_to_datetime )
     data = data.drop( 0, axis=0 ) # Drop one day (oldest)
     data = data.values
+
 
     #'''
     # DEBUG
@@ -60,26 +61,40 @@ def prepare( data ):
     y_normaliser = preprocessing.MinMaxScaler()
     y_normaliser.fit( next_day_close_values )
 
+    # Get dates in a single column
+    dates = np.array( [data[:, meta.column_index['date']][i + history_points].copy() for i in range( len( data ) - history_points)] )
+    dates = np.array( [utils.convert_to_datetime( i ) for i in dates] ) # Convert back to normal dates
+
     technical_indicators_normalised = stock_indicators.get_technical_indicators( preprocessing.MinMaxScaler(), ohlcv_histories_normalised )
 
     assert ohlcv_histories_normalised.shape[0] == next_day_close_values_normalised.shape[0] == technical_indicators_normalised.shape[0]
-    return ohlcv_histories_normalised, technical_indicators_normalised, next_day_close_values_normalised, next_day_close_values, y_normaliser
+    return dates, ohlcv_histories_normalised, technical_indicators_normalised, next_day_close_values_normalised, next_day_close_values, y_normaliser
 
 class Preprocess:
     def __init__( self, test_split ):
-        self.ohlcv_histories, self.technical_indicators, self.next_day_close_values, \
-        self.unscaled_y, self.y_normaliser = from_csv()
+        self.dates, self.ohlcv_histories, self.technical_indicators, \
+        self.next_day_close_values, self.unscaled_y, \
+        self.y_normaliser = prepare( get.dataset() )
+
+        print( "\n\n** Print data shapes: " )
+        print( "*********************************" )
+        print( "dates:", len( self.dates ) )
+        print( "ohlcv_histories:", len( self.ohlcv_histories ) )
+        print( "technical_indicators:", len( self.technical_indicators ) )
+        print( "next_day_close_values:", len( self.next_day_close_values ) )
+        print( "unscaled_y:", len( self.unscaled_y ) )
+        print( "*********************************\n\n" )
 
         self.n_split = int( self.ohlcv_histories.shape[0] * test_split )
 
     def get_unscaled_data( self ):
-        return ( self.unscaled_y[self.n_split:], self.technical_indicators )
+        return ( self.unscaled_y[self.n_split:] )
 
     def get_training_data( self ):
-        return ( self.ohlcv_histories[:self.n_split], self.technical_indicators[:self.n_split], self.next_day_close_values[:self.n_split] )
+        return ( self.ohlcv_histories[:self.n_split], self.technical_indicators[:self.n_split], self.next_day_close_values[:self.n_split], self.dates[:self.n_split] )
 
     def get_test_data( self ):
-        return ( self.ohlcv_histories[self.n_split:], self.technical_indicators[self.n_split:], self.next_day_close_values[self.n_split:] )
+        return ( self.ohlcv_histories[self.n_split:], self.technical_indicators[self.n_split:], self.next_day_close_values[self.n_split:], self.dates[self.n_split:] )
 
     def get_y_normalizer( self ):
         return self.y_normaliser
