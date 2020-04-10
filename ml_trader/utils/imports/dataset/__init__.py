@@ -1,14 +1,22 @@
 import pandas as pd
 import numpy as np
 
+import ml_trader.utils.imports.dataset.get as get
+import ml_trader.utils.file as file
+import ml_trader.config as config
+
+from pprint import pprint
 from sklearn import preprocessing
 
-from config import history_points
-from utils.compute import earnings
+from ml_trader.config import history_points
+from ml_trader.utils.compute import earnings
 
 
-def from_csv( csv_path ):
+def from_csv():
     def calc_ema( values, time_period ):
+        if len( values ) < 13:
+            raise Exception( "ERROR: Please make sure 'config.history_points' is not less than 13. This is requried for exponential-moving-average (ema) formula.")
+
         # https://www.investopedia.com/ask/answers/122314/what-exponential-moving-average-ema-formula-and-how-ema-calculated.asp
         sma = np.mean( values[:, 3] )
         ema_values = [sma]
@@ -20,14 +28,15 @@ def from_csv( csv_path ):
 
         return ema_values[-1]
 
-    data = pd.read_csv( csv_path )
-
+    data = get.dataset()
 
     # The first day of trading that stock often looked anomalous due to the massively high volume (IPO).
     # This inflated max volume value also affected how other volume values in the dataset were scaled when normalising the data,
     # so we drop the oldest data point out of every set)
 
-    date_time = pd.DataFrame( np.array( data['date'], dtype='datetime64' ) )
+    # Transform data
+    #date_time = pd.DataFrame( np.array( data['date'], dtype='datetime64' ) )
+    date_time = pd.DataFrame( data['date'], dtype='datetime64' )
     date_time = date_time.drop( 0, axis=0 ).reset_index( drop=True ) # Drop one day (oldest) and reset index
     date_time = date_time.values # Convert to numpy array
 
@@ -59,7 +68,7 @@ def from_csv( csv_path ):
     '''
 
     # using the last {history_points} open close high low volume data points, predict the next  value
-    ohlcv_histories_normalised      = np.array( [data_normalised[i:i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
+    ohlcv_histories_normalised       = np.array( [data_normalised[i:i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
     next_day_close_values_normalised = np.array( [data_normalised[:, 3][i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
     next_day_close_values_normalised = np.expand_dims( next_day_close_values_normalised, -1 )
 

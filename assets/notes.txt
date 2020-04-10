@@ -2,3 +2,9 @@ https://github.com/davidmroth/ml-autotrader.git
 https://towardsdatascience.com/how-to-use-machine-learning-to-possibly-become-a-millionaire-predicting-the-stock-market-33861916e9c5
 https://towardsdatascience.com/getting-rich-quick-with-machine-learning-and-stock-market-predictions-696802da94fe
 https://github.com/yacoubb/stock-trading-ml
+
+
+
+BUGS:
+- Download file - set symbol to uppercase always
+- Create folders when training, downloading, etc... (Folders: analysis, models, data, etc...)

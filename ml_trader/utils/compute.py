@@ -1,5 +1,8 @@
+import ml_trader.config as config
+
+
 def earnings( buys_, sells_ ):
-    purchase_amt = 10
+    purchase_amt = config.purchase_amt
     stock = 0
     balance = 0
 
@@ -16,4 +19,4 @@ def earnings( buys_, sells_ ):
             stock = 0
             sells_.pop( 0 )
 
-    print( f"earnings: ${balance}" )
+    print( "Earnings: $%.2f" % balance )

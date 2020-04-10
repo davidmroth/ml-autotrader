@@ -1,5 +1,7 @@
 from python:3
 
+ENV TZ=America/Chicago
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 copy requirements.txt /tmp
 run pip install -r /tmp/requirements.txt
 run apt purge git -y
