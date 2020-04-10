@@ -1,5 +1,5 @@
 import argparse
-import ml_trader.utils.imports.dataset.get as get
+import ml_trader.utils.data.imports.get as get
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

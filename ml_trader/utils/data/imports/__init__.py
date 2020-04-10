@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
 
-import ml_trader.utils.imports.dataset.get as get
-import ml_trader.utils.file as file
 import ml_trader.config as config
+import ml_trader.utils.file as file
+import ml_trader.utils.data.imports.get as get
 
 from pprint import pprint
 from sklearn import preprocessing

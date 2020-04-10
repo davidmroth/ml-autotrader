@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import ml_trader.config as config
 
 from ml_trader.models.technical import Technical_Model
-from ml_trader.utils.imports.dataset import from_csv
+from ml_trader.utils.data.imports import from_csv
 from ml_trader.utils.analysis.plot import Plot
 
 

@@ -11,18 +11,8 @@ class Plot:
         self.start = start
         self.end = end
 
-    def unpack_buy_sells( self, value, index ):
+    def _unpack_buy_sells( self, value, index ):
         return list( list( zip( *value ) )[index] )
-
-    def graph( self, x_axis, y_axis, label=None ):
-        plt.plot( y_axis[self.start:self.end], label=label )
-
-    def plot_buys_and_sells( self, x_axis, x_index, y_axis, y_index, c, s, label=None ):
-        plt.scatter(
-            self.unpack_buy_sells( x_axis, x_index ),
-            self.unpack_buy_sells( y_axis, y_index ),
-            c=c, s=s
-        )
 
     def add_note( self, text ):
         textstr = '\n'.join( text )
@@ -34,6 +24,16 @@ class Plot:
             fontsize=14,
             verticalalignment='bottom',
             bbox=props
+        )
+
+    def graph( self, x_axis, y_axis, label=None ):
+        plt.plot( x_axis[self.start:self.end], y_axis[self.start:self.end], label=label )
+
+    def plot_buys_and_sells( self, x_axis, x_index, y_axis, y_index, c, s, label=None ):
+        plt.scatter(
+            self._unpack_buy_sells( x_axis, x_index ),
+            self._unpack_buy_sells( y_axis, y_index ),
+            c=c, s=s
         )
 
     def create( self ):

@@ -1,6 +1,6 @@
 import ml_trader.config as config
 
-from ml_trader.utils.imports.dataset import from_csv
+from ml_trader.utils.data.imports import from_csv
 
 
 class Preprocess:
