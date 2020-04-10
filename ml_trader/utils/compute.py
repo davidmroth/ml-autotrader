@@ -1,7 +1,10 @@
 import ml_trader.config as config
 
 
-def earnings( buys_, sells_ ):
+def earnings( buys, sells ):
+    buys_ = [b for b in buys]
+    sells_ = [s for s in sells]
+
     purchase_amt = config.purchase_amt
     stock = 0
     balance = 0

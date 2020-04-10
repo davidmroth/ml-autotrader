@@ -2,10 +2,11 @@ import time
 import numpy as np
 
 import ml_trader.config as config
+import ml_trader.utils.logic as trade_logic
 
 from ml_trader.models.technical import Technical_Model
-from ml_trader.utils.analysis.plot import Plot
 from ml_trader.utils import compute
+from ml_trader.utils.analysis.plot import Plot
 from ml_trader.utils.file import timestamp
 from ml_trader.utils.data import Preprocess
 
@@ -33,34 +34,10 @@ y_test_predicted = technical_model.predict( [ohlcv_test, tech_ind_test] )
 '''
 Buy / Sell Logic
 '''
-buys = []
-sells = []
-thresh = config.trade_threshold #in dollars?
 start = 0
 end = -1
-
-predicted_price_tomorrow_array = np.array( [None] )
-
-for ohlcv, ind, date in zip( ohlcv_test[start: end], tech_ind_test[start: end], y_test_dates[start: end] ):
-    normalised_price_today = np.array( [[ohlcv[-1][0]]] )
-
-    price_today = y_normaliser.inverse_transform( normalised_price_today )
-
-    predicted_price_tomorrow = np.squeeze( y_normaliser.inverse_transform( technical_model.predict( [[ohlcv], [ind]] ) ) )
-
-    # For plotting
-    predicted_price_tomorrow_array = np.append( predicted_price_tomorrow_array, predicted_price_tomorrow )
-
-    delta = predicted_price_tomorrow - price_today
-
-    # Buy / Sell Logic
-    if delta > thresh:
-        buys.append( ( date, price_today[0][0] ) )
-
-    elif delta < -thresh:
-        sells.append( ( date, price_today[0][0] ) )
-
-    #print( "X %s, ind: %s " % ( x, ind ) )
+trade_data = zip( ohlcv_test[start: end], tech_ind_test[start: end], y_test_dates[start: end] )
+predicted_price_yhat, buys, sells = trade_logic.do_trade( technical_model, trade_data, y_normaliser )
 
 
 '''
@@ -70,17 +47,11 @@ print( "Buys: %d" % len( buys ) )
 print( "Sells: %d" % len( sells ) )
 
 # We create new lists so we dont modify the original
-compute.earnings( [b for b in buys], [s for s in sells] )
+compute.earnings( buys, sells )
 
 real_mse = np.mean( np.square( unscaled_y_test - y_test_predicted ) )
 scaled_mse = real_mse / ( np.max( unscaled_y_test ) - np.min( unscaled_y_test ) ) * 100
 print( "Mean Squared Error (MSE): %.2f" % scaled_mse )
-
-'''
-DEBUG
-'''
-print( unscaled_y_test.shape )
-print( predicted_price_tomorrow_array.shape )
 
 
 '''
@@ -88,7 +59,7 @@ Plot
 '''
 plt = Plot( 'Simulation', start=0, end=-1, legend=['Real', 'Predicted', 'Buy', 'Sell'] )
 plt.graph( x_axis=y_test_dates, y_axis=unscaled_y_test, label='Real' )
-plt.graph( x_axis=y_test_dates, y_axis=predicted_price_tomorrow_array, label='Predicted' )
+plt.graph( x_axis=y_test_dates, y_axis=predicted_price_yhat, label='Predicted' )
 plt.add_note(
     (
         r'Date: %s' % ( time.strftime( "%m/%d/%Y %H:%M:%S" ) ),

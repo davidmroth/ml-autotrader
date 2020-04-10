@@ -13,6 +13,9 @@ months = mdates.MonthLocator()  # every month
 yearsFmt = mdates.DateFormatter('%Y')
 
 
+def format_price( p ):
+    return np.set_printoptions( formatter={'float': lambda x: "{0:0.2f}".format( price_today[0][0] )} )
+
 class Plot:
     def __init__( self, name, start, end, legend=None, xlabel=None, ylabel=None  ):
         self.xlabel = xlabel
@@ -58,6 +61,7 @@ class Plot:
         x = self._unpack_buy_sells( x_axis, x_index )
         x = np.array( [datetime.datetime.fromtimestamp( i ) for i in x] )
         y = self._unpack_buy_sells( y_axis, y_index )
+        y = np.around( y, 2 )
 
         plt.scatter( x, y, c=c, s=s )
 
