@@ -55,11 +55,11 @@ class Plot:
             ax.xaxis.set_major_formatter( mdates.DateFormatter( '"%B %d, %Y"' ) )
 
     def plot_buys_and_sells( self, x_axis, x_index, y_axis, y_index, c, s, label=None ):
-        plt.scatter(
-            self._unpack_buy_sells( x_axis, x_index ),
-            self._unpack_buy_sells( y_axis, y_index ),
-            c=c, s=s
-        )
+        x = self._unpack_buy_sells( x_axis, x_index )
+        x = np.array( [datetime.datetime.fromtimestamp( i ) for i in x] )
+        y = self._unpack_buy_sells( y_axis, y_index )
+
+        plt.scatter( x, y, c=c, s=s )
 
     def create( self ):
         file_path = file.timestamp( config.train_analysis.format( self.name ) )
@@ -72,6 +72,7 @@ class Plot:
 
         else:
             plt.legend()
+
         plt.xlabel( self.xlabel )
         plt.ylabel( self.ylabel )
         plt.savefig( file_path )

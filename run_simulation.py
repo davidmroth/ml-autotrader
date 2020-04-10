@@ -36,31 +36,31 @@ Buy / Sell Logic
 buys = []
 sells = []
 thresh = config.trade_threshold #in dollars?
-x = -1
 start = 0
 end = -1
 
 predicted_price_tomorrow_array = np.array( [None] )
 
-for ohlcv, ind in zip( ohlcv_test[start: end], tech_ind_test[start: end] ):
-    normalised_price_today = ohlcv[-1][0]
-    normalised_price_today = np.array( [[normalised_price_today]] )
+for ohlcv, ind, date in zip( ohlcv_test[start: end], tech_ind_test[start: end], y_test_dates[start: end] ):
+    normalised_price_today = np.array( [[ohlcv[-1][0]]] )
+
     price_today = y_normaliser.inverse_transform( normalised_price_today )
 
     predicted_price_tomorrow = np.squeeze( y_normaliser.inverse_transform( technical_model.predict( [[ohlcv], [ind]] ) ) )
+
+    # For plotting
     predicted_price_tomorrow_array = np.append( predicted_price_tomorrow_array, predicted_price_tomorrow )
 
     delta = predicted_price_tomorrow - price_today
 
     # Buy / Sell Logic
     if delta > thresh:
-        buys.append( ( x, price_today[0][0] ) )
+        buys.append( ( date, price_today[0][0] ) )
 
     elif delta < -thresh:
-        sells.append( ( x, price_today[0][0] ) )
+        sells.append( ( date, price_today[0][0] ) )
 
     #print( "X %s, ind: %s " % ( x, ind ) )
-    x += 1
 
 
 '''
@@ -98,11 +98,11 @@ plt.add_note(
         r'History Points: %d' % (config.history_points, )
     )
 )
-'''
+
 if len( buys ) > 0:
     plt.plot_buys_and_sells( x_axis=buys, x_index=0, y_axis=buys, y_index=1 , c='#00ff00', s=50 )
 
 if len( sells ) > 0:
     plt.plot_buys_and_sells( x_axis=sells, x_index=0, y_axis=sells, y_index=1 , c='#ff0000', s=50 )
-'''
+
 plt.create()
