@@ -21,7 +21,6 @@ def from_csv():
     # so we drop the oldest data point out of every set)
 
     # Transform data
-    #date_time = pd.DataFrame( np.array( data['date'], dtype='datetime64' ) )
     date_time = pd.DataFrame( data['date'], dtype='datetime64' )
     date_time = date_time.drop( 0, axis=0 ).reset_index( drop=True ) # Drop one day (oldest) and reset index
     date_time = date_time.values # Convert to numpy array

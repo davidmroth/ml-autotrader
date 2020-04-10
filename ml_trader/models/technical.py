@@ -1,6 +1,7 @@
 import ml_trader.utils.lazy as lazy_import
 import ml_trader.utils.file as file
 import ml_trader.config as config
+import ml_trader.utils.data.meta as meta
 
 # Lazy loading...
 optimizers = lazy_import.lazy_module( 'keras.optimizers' )
@@ -23,7 +24,7 @@ class Technical_Model:
         print( " **Initializing model..." )
 
         # define two sets of inputs
-        lstm_input = Input( shape=( config.history_points, config.column_count ), name='lstm_input' )
+        lstm_input = Input( shape=( config.history_points, meta.column_count ), name='lstm_input' )
         dense_input = Input( shape=( input_size, ), name='tech_input' )
 
         # the first branch operates on the first input

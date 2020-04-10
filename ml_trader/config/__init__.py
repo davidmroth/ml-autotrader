@@ -6,12 +6,6 @@
 stock_symbol = 'msft'
 dataset_type = 'daily'
 
-# Describe Data
-column_header = {
-    'date': 0, 'open':1, 'high':2, 'low':3, 'close':4, 'volume':5
-}
-column_count = 5 # Data shape expected
-
 # File paths
 data_filepath = 'data/stock/%s_%s.csv'
 model_filepath = 'data/models/technical_model.h5'
