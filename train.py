@@ -43,6 +43,7 @@ y_test_predicted = technical_model.predict( [ohlcv_test, tech_ind_test] )
 
 assert unscaled_y_test.shape == y_test_predicted.shape
 
+
 '''
 Analysis & Scoring
 '''
@@ -57,6 +58,7 @@ necessary to remove any negative signs. It also gives more weight to larger
 differences. It’s called the mean squared error as you’re finding the average
 of a set of errors.
 '''
+
 real_mse = np.mean( np.square( unscaled_y_test - y_test_predicted ) )
 scaled_mse = real_mse / ( np.max( unscaled_y_test ) - np.min( unscaled_y_test ) ) * 100
 print( "Mean Squared Error:", scaled_mse )
