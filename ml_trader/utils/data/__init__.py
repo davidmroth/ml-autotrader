@@ -30,25 +30,10 @@ def prepare( data ):
     data = data.values
 
 
-    #'''
-    # DEBUG
-    df = pd.DataFrame( data )
-    pprint( df.head() )
-    pprint( df.tail() )
-    #'''
-
     # Normalise the data — scale it between 0 and 1 — to improve how quickly our network converges
     data_normaliser = preprocessing.MinMaxScaler()
     data_normalised = data_normaliser.fit_transform( data )
 
-    '''
-    # DEBUG
-    df = pd.DataFrame( data )
-    dn = pd.DataFrame( data_normalised )
-    print( "Data:", df.head() )
-    print( "Normalized:", dn.head() )
-    exit()
-    '''
 
     # using the last {history_points} open close high low volume data points, predict the next  value
     ohlcv_histories_normalised       = np.array( [data_normalised[i:i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
@@ -71,7 +56,7 @@ def prepare( data ):
     return dates, ohlcv_histories_normalised, technical_indicators_normalised, next_day_close_values_normalised, next_day_close_values, y_normaliser
 
 class Preprocess:
-    def __init__( self, test_split ):
+    def __init__( self, test_split=False ):
         self.dates, self.ohlcv_histories, self.technical_indicators, \
         self.next_day_close_values, self.unscaled_y, \
         self.y_normaliser = prepare( get.dataset() )
@@ -85,7 +70,8 @@ class Preprocess:
         print( "unscaled_y:", len( self.unscaled_y ) )
         print( "*********************************\n\n" )
 
-        self.n_split = int( self.ohlcv_histories.shape[0] * test_split )
+        if test_split:
+            self.n_split = int( self.ohlcv_histories.shape[0] * test_split )
 
     def get_unscaled_data( self ):
         return ( self.unscaled_y[self.n_split:] )
@@ -98,3 +84,14 @@ class Preprocess:
 
     def get_y_normalizer( self ):
         return self.y_normaliser
+
+    def get_history_for_date( self, date ):
+        dates = np.array( [datetime.datetime.fromtimestamp( i ) for i in self.dates] )
+        date_min = dates.min()
+        date_max = dates.max()
+
+        if ( date > date_min and date <= date_max ):
+            idx = np.searchsorted( dates, date )
+            return ( self.ohlcv_histories[idx], self.technical_indicators[idx], self.next_day_close_values[idx], self.dates[idx] )
+        else:
+            raise Exception( "Date ranges should be between '%s' & '%s'" % ( date_min.strftime( '%b %d, %Y' ), date_max.strftime( '%b %d, %Y' ) ) )

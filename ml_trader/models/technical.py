@@ -57,7 +57,7 @@ class Technical_Model:
 
         return self._validate_model( self.model )
 
-    def _validate_model( self, model ):
+    def _check_model( self, model ):
         print( "\n\n******************************************************" )
         print( model.summary() )
         print( "******************************************************\n\n" )
@@ -65,7 +65,7 @@ class Technical_Model:
         if model.layers[1].output_shape[1] != config.history_points or model.layers[1].output_shape[2] != meta.column_count:
             raise Exception( "*** Please retrain this model. Config is out of sync with the saved model!" )
 
-        return model
+        return self
 
     def get_model( self ):
         return self.model
@@ -77,8 +77,10 @@ class Technical_Model:
         if not file.exists( config.model_filepath ):
             raise Exception( "*** Model ('%s') does not exist! Please train." % config.model_filepath )
 
+        # Load pretrianed model
         self.model = load_model( config.model_filepath )
-        return self._validate_model( self.model )
+
+        return self._check_model( self.model )
 
     def save( self ):
         file.create_path_if_needed( config.model_filepath )
@@ -90,10 +92,13 @@ class Technical_Model:
         return self.model.fit( x=x, y=y, \
             batch_size=config.batch_size, epochs=config.epochs, \
             shuffle=False, validation_split=0.1, \
-            callbacks=[EarlyStopping(monitor='val_loss', patience=10)], \
+            callbacks=[EarlyStopping( monitor='val_loss', patience=10 )], \
             validation_data=(x_test, y_test), \
             verbose=1 )
 
     def predict( self, y ):
         y_predicted = self.model.predict( y )
         return self.y_normaliser.inverse_transform( y_predicted )
+
+    def predict_raw( self, y ):
+        return self.model.predict( y )

@@ -30,7 +30,6 @@ Run model
 technical_model = Technical_Model( y_normaliser ).load() # Load model
 y_test_predicted = technical_model.predict( [ohlcv_test, tech_ind_test] )
 
-
 '''
 Buy / Sell Logic
 '''
@@ -49,6 +48,7 @@ print( "Sells: %d" % len( sells ) )
 # We create new lists so we dont modify the original
 compute.earnings( buys, sells )
 
+# TODO: Move to model scoring
 real_mse = np.mean( np.square( unscaled_y_test - y_test_predicted ) )
 scaled_mse = real_mse / ( np.max( unscaled_y_test ) - np.min( unscaled_y_test ) ) * 100
 print( "Mean Squared Error (MSE): %.2f" % scaled_mse )
