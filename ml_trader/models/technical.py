@@ -70,6 +70,11 @@ class Technical_Model:
     def get_model( self ):
         return self.model
 
+
+    def save( self ):
+        file.create_path_if_needed( config.model_filepath )
+        self.model.save( config.model_filepath )
+
     def score( self, x, y ):
         return self.model.evaluate( x, y, batch_size=config.batch_size )
 
@@ -81,10 +86,6 @@ class Technical_Model:
         self.model = load_model( config.model_filepath )
 
         return self._check_model( self.model )
-
-    def save( self ):
-        file.create_path_if_needed( config.model_filepath )
-        self.model.save( config.model_filepath )
 
     def train( self, x, y, x_test, y_test ):
         # x = new input data

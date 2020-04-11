@@ -16,6 +16,7 @@ tf.random.set_seed( 4 )
 '''
 Retreive & preprocess data for ML model
 '''
+# Setup
 preprocess = Preprocess( 0.9 )
 # Training data
 ohlcv_train, tech_ind_train, y_train, y_train_dates = preprocess.get_training_data()
