@@ -36,7 +36,7 @@ class Plot:
             0.135, 0.125,
             textstr,
             fontsize=14,
-            verticalalignment='bottom',
+            verticalalignment='top',
             bbox=props
         )
 

@@ -1,3 +1,5 @@
+import numpy as np
+
 import ml_trader.utils.file as file
 import ml_trader.config as config
 import ml_trader.utils.data.meta as meta
@@ -44,6 +46,7 @@ class Technical_Model:
         combined = concatenate( [lstm_branch.output, technical_indicators_branch.output], name='concatenate' )
 
         z = Dense( 64, activation="sigmoid", name='dense_pooling' )( combined )
+        # Linear is better for regression instead of classification
         z = Dense( 1, activation="linear", name='dense_out' )( z )
 
         # This model will accept the inputs of the two branches and
@@ -80,7 +83,21 @@ class Technical_Model:
         self._save_model_visualization( self.model )
 
     def score( self, x, y ):
-        return self.model.evaluate( x, y, batch_size=config.batch_size )
+        return self.model.evaluate( x, y )
+
+    def mean_squaured_error( self, y_test, y_predicted ):
+        '''
+        Mean Squared Error Definition
+
+        The mean squared error tells you how close a regression line is to a set of
+        points. It does this by taking the distances from the points to the regression
+        line (these distances are the “errors”) and squaring them. The squaring is
+        necessary to remove any negative signs. It also gives more weight to larger
+        differences. It’s called the mean squared error as you’re finding the average
+        of a set of errors.
+        '''
+        real_mse = np.mean( np.square( y_test - y_predicted ) )
+        return real_mse / ( np.max( y_test ) - np.min( y_test ) ) * 100
 
     def load( self ):
         if not file.exists( config.model_filepath ):

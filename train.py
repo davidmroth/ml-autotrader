@@ -8,7 +8,6 @@ from ml_trader.models.technical import Technical_Model
 from ml_trader.utils.analysis.plot import Plot
 from ml_trader.utils.data import Preprocess
 
-
 np.random.seed( 4 )
 tf.random.set_seed( 4 )
 
@@ -24,15 +23,14 @@ ohlcv_train, tech_ind_train, y_train, y_train_dates = preprocess.get_training_da
 ohlcv_test, tech_ind_test, y_test, y_test_dates = preprocess.get_test_data()
 # Other
 unscaled_y_test = preprocess.get_unscaled_data()
-y_normaliser = preprocess.get_y_normalizer()
 
 
 '''
 Train model
 '''
-technical_model = Technical_Model( y_normaliser ) # Instantiate class
+technical_model = Technical_Model( preprocess.get_y_normalizer() ) # Instantiate class
 technical_model.build() # Build model
-history = technical_model.train( [ohlcv_train, tech_ind_train], y_train, [ohlcv_test, tech_ind_test], y_test ) # Train model
+evalutation = technical_model.train( [ohlcv_train, tech_ind_train], y_train, [ohlcv_test, tech_ind_test], y_test ) # Train model
 technical_model.save() # Save trained model for later use
 
 
@@ -42,28 +40,13 @@ Evaluate model
 y_train_predicted = technical_model.predict( [ohlcv_train, tech_ind_train] )
 y_test_predicted = technical_model.predict( [ohlcv_test, tech_ind_test] )
 
+# Check
 assert unscaled_y_test.shape == y_test_predicted.shape
 
 
 '''
-Analysis & Scoring
+Score model
 '''
-
-'''
-Mean Squared Error Definition
-
-The mean squared error tells you how close a regression line is to a set of
-points. It does this by taking the distances from the points to the regression
-line (these distances are the “errors”) and squaring them. The squaring is
-necessary to remove any negative signs. It also gives more weight to larger
-differences. It’s called the mean squared error as you’re finding the average
-of a set of errors.
-'''
-
-real_mse = np.mean( np.square( unscaled_y_test - y_test_predicted ) )
-scaled_mse = real_mse / ( np.max( unscaled_y_test ) - np.min( unscaled_y_test ) ) * 100
-print( "Mean Squared Error:", scaled_mse )
-print( "Evalutation: ", technical_model.score( [ohlcv_test, tech_ind_test], unscaled_y_test) )
 
 '''
 What does the Mean Squared Error Tell You?
@@ -74,6 +57,11 @@ value for the mean squared error. For example, the above data is scattered
 wildly around the regression line, so 6.08 is as good as it gets (and is in
 fact, the line of best fit).
 '''
+mse = technical_model.mean_squaured_error( unscaled_y_test, y_test_predicted )
+acc, loss = technical_model.score( [ohlcv_test, tech_ind_test], y_test )
+
+print( "Mean Squared Error: %.4f" %  mse )
+print( "Evalutation: Loss: %.4f, Accuracy: %.4f" % ( acc, loss ) )
 
 
 '''
@@ -87,7 +75,7 @@ plt.add_note(
     (
         r'Date: %s' % ( time.strftime( "%m/%d/%Y %H:%M:%S" ) ),
         r'Symbol: %s' % ( config.stock_symbol, ),
-        r'MSE: %.2f' % ( scaled_mse, ),
+        r'MSE: %.2f' % ( mse, ),
         r'Epochs: %d' % ( config.epochs, ),
         r'History Points: %d' % ( config.history_points, )
     )
@@ -97,8 +85,8 @@ plt.create()
 #TODO: Put accuracy on a seperate scale shared by the same X axis
 plt = Plot( 'Training_loss', start=0, end=-1, xlabel='Epochs', ylabel='Loss' )
 plt.title( 'Model Training vs. Validation Loss' )
-plt.graph( y_axis=history.history['loss'], label='Train Loss' )
-plt.graph( y_axis=history.history['val_loss'], label='Test Loss' )
-plt.graph( y_axis=history.history['accuracy'], label='Train accuracy' )
-plt.graph( y_axis=history.history['val_accuracy'], label='Test accuracy' )
+plt.graph( y_axis=evalutation.history['loss'], label='Train Loss' )
+plt.graph( y_axis=evalutation.history['val_loss'], label='Test Loss' )
+plt.graph( y_axis=evalutation.history['accuracy'], label='Train accuracy' )
+plt.graph( y_axis=evalutation.history['val_accuracy'], label='Test accuracy' )
 plt.create()
