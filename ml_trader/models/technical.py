@@ -55,7 +55,7 @@ class Technical_Model:
         adam = optimizers.Adam( lr=0.0005 )
         self.model.compile( optimizer=adam, loss='mse' )
 
-        return self._validate_model( self.model )
+        return self._check_model( self.model )
 
     def _check_model( self, model ):
         print( "\n\n******************************************************" )

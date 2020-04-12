@@ -6,6 +6,9 @@
 stock_symbol = 'msft'
 dataset_type = 'daily'
 
+# User preferences
+timezone = 'Europe/Moscow'
+
 # File paths
 data_filepath = 'data/stock/%s_%s.csv'
 model_filepath = 'data/models/technical_model.h5'

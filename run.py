@@ -4,6 +4,7 @@ import datetime
 import numpy as np
 
 import ml_trader.utils as utils
+import ml_trader.utils.data.meta as meta
 import ml_trader.config as config
 import ml_trader.utils.logic as trade_logic
 
@@ -24,26 +25,18 @@ def predict( date ):
     y_normaliser = preprocess.get_y_normalizer()
 
 
-    ohlcv = np.array( [ohlcv] )
-    tech_ind = np.array( [tech_ind] )
-    y_date = utils.convert_to_datetime( y_date )
-
-
     '''
     Run model
     '''
     technical_model = Technical_Model( y_normaliser ).load() # Load model
-    y_price_predicted = technical_model.predict( [ohlcv, tech_ind] )
-    
-    print(
-        'The price predicted is {:.2f} which is the day after {}'.format(
-            y_price_predicted[0][0],
-            y_date
-        )
-    )
+    y_price_predicted = technical_model.predict( [[ohlcv], [tech_ind]] )
 
+    #BUG: Last column is not the current day's metrics.
+    #TODO: Need to figure out how to get the current day's metrics(?)
+    close_price_today = y_normaliser.inverse_transform( np.array( [[ohlcv[-1][meta.column_index['close']]]] ) )
+    trade_logic.get_insight( y_date, close_price_today, y_price_predicted )
 
-def valid_date( s ):
+def check_valid_date( s ):
     type( s )
     try:
         datetime.datetime.strptime( s, "%m/%d/%Y" )
@@ -57,7 +50,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         'date',
-        type=valid_date,
+        type=check_valid_date,
         help="The day you predict the stock price; defaults to the next business day"
     )
 

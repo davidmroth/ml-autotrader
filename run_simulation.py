@@ -30,8 +30,9 @@ Run model
 technical_model = Technical_Model( y_normaliser ).load() # Load model
 y_test_predicted = technical_model.predict( [ohlcv_test, tech_ind_test] )
 
+
 '''
-Buy / Sell Logic
+Buy / Sell Trade Logic
 '''
 trade_data = ( ohlcv_test, tech_ind_test, y_test_dates )
 predicted_price_yhat, buys, sells = trade_logic.do_trade( technical_model, trade_data, y_normaliser )
