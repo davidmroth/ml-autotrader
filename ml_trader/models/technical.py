@@ -14,6 +14,7 @@ Activation = lazy_import.lazy_callable( 'keras.layers.Activation' )
 concatenate = lazy_import.lazy_callable( 'keras.layers.concatenate' )
 load_model = lazy_import.lazy_callable( 'keras.models.load_model' )
 
+from keras.utils import plot_model
 from keras.callbacks import EarlyStopping
 
 
@@ -23,15 +24,16 @@ class Technical_Model:
     def __init__( self, y_normaliser ):
         # Used to invert normalision applied to predictions
         self.y_normaliser = y_normaliser
+        self.data_column_size = len( meta.column_index )
 
-    def build( self, input_size ):
+    def build( self ):
         print( " **Initializing model..." )
 
         # define two sets of inputs
-        lstm_input = Input( shape=( config.history_points, meta.column_count ), name='lstm_input' )
-        dense_input = Input( shape=( input_size, ), name='tech_input' )
+        lstm_input = Input( shape=( config.history_points, self.data_column_size ), name='lstm_input' )
+        dense_input = Input( shape=( config.technical_indictors_input_size, ), name='tech_input' )
 
-        # the first branch operates on the first input
+        # The first branch operates on the first input
         #x = LSTM( config.history_points, name='lstm_0' )( lstm_input )
         x = LSTM( 50, name='lstm_0' )( lstm_input )
         x = Dropout( 0.2, name='lstm_dropout_0')( x )
@@ -62,18 +64,23 @@ class Technical_Model:
         print( model.summary() )
         print( "******************************************************\n\n" )
 
-        if model.layers[1].output_shape[1] != config.history_points or model.layers[1].output_shape[2] != meta.column_count:
+        if model.layers[1].output_shape[1] != config.history_points or model.layers[1].output_shape[2] != self.data_column_size:
             raise Exception( "*** Please retrain this model. Config is out of sync with the saved model!" )
 
         return self
 
+    def _save_model_visualization( self, model ):
+        file_path = file.timestamp( config.model_visualization_filepath )
+        file.create_path_if_needed( file_path )
+        plot_model( model, to_file=file_path, show_shapes=True )
+
     def get_model( self ):
         return self.model
-
 
     def save( self ):
         file.create_path_if_needed( config.model_filepath )
         self.model.save( config.model_filepath )
+        self._save_model_visualization( self.model )
 
     def score( self, x, y ):
         return self.model.evaluate( x, y, batch_size=config.batch_size )
@@ -90,10 +97,14 @@ class Technical_Model:
     def train( self, x, y, x_test, y_test ):
         # x = new input data
         # y = predicted data
+        # Sample - a single row of data
+        # Batch - the number of samples to work through before updating the internal model parameters
+        # Epoc - the number times that the learning algorithm will work through the entire training dataset
+
         return self.model.fit( x=x, y=y, \
             batch_size=config.batch_size, epochs=config.epochs, \
-            shuffle=False, validation_split=0.1, \
-            callbacks=[EarlyStopping( monitor='val_loss', patience=10 )], \
+            shuffle=config.shuffle, validation_split=0.1, \
+            #callbacks=[EarlyStopping( monitor='val_loss', patience=10 )], \
             validation_data=(x_test, y_test), \
             verbose=1 )
 

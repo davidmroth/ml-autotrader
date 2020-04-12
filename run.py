@@ -33,11 +33,10 @@ def predict( date ):
 
     #BUG: Last column is not the current day's metrics.
     #TODO: Need to figure out how to get the current day's metrics(?)
-    close_price_today = y_normaliser.inverse_transform( np.array( [[ohlcv[-1][meta.column_index['close']]]] ) )
-    trade_logic.get_insight( y_date, close_price_today, y_price_predicted )
+    price_today = y_normaliser.inverse_transform( np.array( [[ohlcv[-1][meta.meta.label_column]]] ) )
+    trade_logic.get_insight( y_date, price_today, y_price_predicted )
 
 def check_valid_date( s ):
-    type( s )
     try:
         datetime.datetime.strptime( s, "%m/%d/%Y" )
         return s

@@ -40,10 +40,12 @@ class Plot:
             bbox=props
         )
 
+    def title( self, title ):
+        plt.title( title )
+
     def graph( self, y_axis, x_axis=None, label=None ):
         if ( x_axis is None ):
             plt.plot( y_axis[self.start:self.end], label=label )
-
         else:
             x_axis = x_axis[self.start:self.end]
             x_axis = np.array( [datetime.datetime.fromtimestamp( i ) for i in x_axis] )

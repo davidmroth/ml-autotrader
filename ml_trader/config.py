@@ -12,6 +12,7 @@ timezone = 'Europe/Moscow'
 # File paths
 data_filepath = 'data/stock/%s_%s.csv'
 model_filepath = 'data/models/technical_model.h5'
+model_visualization_filepath = 'data/analysis/model_visualization_%s.png'
 prediction_analysis = 'data/analysis/{}_out_%s.png'
 train_analysis = 'data/analysis/{}_out_%s.png'
 
@@ -22,6 +23,8 @@ trade_threshold = 0.1
 
 
 # Model hyperparamters
-history_points = 50 # Can't be less than 13
-batch_size = 64
+history_points = 50 # Size of LSTM input / Can't be less than 13
+technical_indictors_input_size = 1 # Size of technical indictors input
+shuffle = True
+batch_size = 32
 epochs = 50 # Number of training runs ( typlically, the more the better )

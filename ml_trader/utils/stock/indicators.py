@@ -21,9 +21,12 @@ def get_technical_indicators( min_scaler, histories_normalized ):
     technical_indicators = []
 
     for history in histories_normalized:
-        sma = np.mean( history[:, meta.column_index['close']] ) # Note since we are using history[3] we are taking the SMA (Simple Moving Average) of the closing price
-        macd = _calc_ema( history, 12 ) - _calc_ema( history, 26 ) # Moving average convergence divergence
+        '''
+        SMA (Simple Moving Average) of the closing price
+        '''
+        sma = np.mean( history[:, meta.column_index['close']] )
         technical_indicators.append( np.array( [sma] ) )
+        #macd = _calc_ema( history, 12 ) - _calc_ema( history, 26 ) # Moving average convergence divergence
         # technical_indicators.append(np.array([sma,macd,]))
 
     technical_indicators = np.array( technical_indicators )

@@ -31,7 +31,7 @@ y_normaliser = preprocess.get_y_normalizer()
 Train model
 '''
 technical_model = Technical_Model( y_normaliser ) # Instantiate class
-technical_model.build( tech_ind_train.shape[1] ) # Build model
+technical_model.build() # Build model
 history = technical_model.train( [ohlcv_train, tech_ind_train], y_train, [ohlcv_test, tech_ind_test], y_test ) # Train model
 technical_model.save() # Save trained model for later use
 
@@ -63,6 +63,7 @@ of a set of errors.
 real_mse = np.mean( np.square( unscaled_y_test - y_test_predicted ) )
 scaled_mse = real_mse / ( np.max( unscaled_y_test ) - np.min( unscaled_y_test ) ) * 100
 print( "Mean Squared Error:", scaled_mse )
+print( "Evalutation: ", technical_model.score( [ohlcv_test, tech_ind_test], unscaled_y_test) )
 
 '''
 What does the Mean Squared Error Tell You?
@@ -79,6 +80,7 @@ fact, the line of best fit).
 Plot
 '''
 plt = Plot( 'Training', start=0, end=-1, xlabel='Date', ylabel='Stock Price' )
+plt.title( 'Training Result' )
 plt.graph( x_axis=y_test_dates, y_axis=unscaled_y_test, label='Real' )
 plt.graph( x_axis=y_test_dates, y_axis=y_test_predicted, label='Predicted' )
 plt.add_note(
@@ -93,6 +95,7 @@ plt.add_note(
 plt.create()
 
 plt = Plot( 'Training_loss', start=0, end=-1, xlabel='Epochs', ylabel='Loss' )
+plt.title( 'Model Training vs. Validation Loss' )
 plt.graph( y_axis=history.history['loss'], label='Train Loss' )
-plt.graph( y_axis=history.history['val_loss'], label='Test Loss' )
+plt.graph( y_axis=history.history['val_loss'], label='Train Loss' )
 plt.create()

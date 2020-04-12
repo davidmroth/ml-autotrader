@@ -3,8 +3,18 @@ https://towardsdatascience.com/how-to-use-machine-learning-to-possibly-become-a-
 https://towardsdatascience.com/getting-rich-quick-with-machine-learning-and-stock-market-predictions-696802da94fe
 https://github.com/yacoubb/stock-trading-ml
 
+#How to Diagnose Overfitting and Underfitting of LSTM Models
+https://machinelearningmastery.com/diagnose-overfitting-underfitting-lstm-models/
 
 
 BUGS:
 - Download file - set symbol to uppercase always
 - Create folders when training, downloading, etc... (Folders: analysis, models, data, etc...)
+
+Fix overfitting:
+The validation loss is increasing while the training loss is decreasing.
+
+Dealing with such a Model:
+- Data Preprocessing: Standardizing and Normalizing the data.
+- Model compelxity: Check if the model is too complex. Add dropout, reduce number of layers or number of neurons in each layer.
+- Learning Rate and Decay Rate: Reduce the learning rate, a good starting value is usually between 0.0005 to 0.001. Also consider a decay rate of 1e-6.
