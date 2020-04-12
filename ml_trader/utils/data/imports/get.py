@@ -35,8 +35,7 @@ def retrieve( symbol, time_window, force=False ):
         # Save to csv while respecting configuration
         data.to_csv( filepath )
 
-        # Prevent date from being indexed
-        return data.reset_index()
+        return data
 
     # If file already exist, just read and return data
     else:
@@ -55,9 +54,13 @@ def dataset( *args, **kargs ):
     else:
         raise Exception( "Error!" )
 
-    #DEBUG:
+    # Sort ascending and prevent date from being indexed
+    data = data.sort_values( ['date'] ).reset_index( drop=True )
+
+    # Show dataframe stats
     print( "\nDataset for {} (first 50 rows):".format( config.stock_symbol.upper() ) )
     pprint( data.head( 50 ) )
+    pprint( data.tail( 50 ) )
     print( "\n\n" )
 
     return data
