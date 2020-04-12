@@ -22,7 +22,7 @@ from sklearn import preprocessing
 from ml_trader.utils.compute import earnings
 
 
-def prepare( data ):
+def prepare_labels_feat( data ):
     history_points = config.history_points
 
     # The first day of trading that stock often looked anomalous due to the massively high volume (IPO).
@@ -37,13 +37,11 @@ def prepare( data ):
     # Remove first date since IPO's tend to swing wildly on the first day
     # of open and may confuse the model
     data = data.iloc[1:].values # Convert to numpy array
-    print( "All data:", data, "\n\n\n" )
 
     # Normalise the data — scale it between 0 and 1 — to improve how quickly our network converges
     normaliser = preprocessing.MinMaxScaler()
     data_normalised = normaliser.fit_transform( data ) # Normalize all columns
-
-    print( "All data normalized:", data_normalised, "\n\n\n" )
+    
 
     '''
     Using the last {history_points} open close high low volume data points, predict the next value
@@ -51,129 +49,36 @@ def prepare( data ):
     Lob off the first x items as they won't include x previous date
     x = history_points
     '''
-    start_time = timeit.default_timer()
-    ohlcv_histories_normalised = np.array( [data_normalised[i:i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
-    print( '{:.99f}'.format( timeit.default_timer() - start_time ).rstrip('0').rstrip('.') )
+    #TODO: Figure out why 'i+1:i + history_points+1' works, but not i:i + history_points
+    feat_ohlcv_histories_normalised = np.array( [data_normalised[i+1:i + history_points+1].copy() for i in range( len( data_normalised ) - history_points )] )
 
-    #ohlcv_histories_normalised = np.array( [data[i:i + history_points].copy() for i in range( len( data ) - history_points )] )
-
-    '''
-    print( ohlcv_histories_normalised[-1] )
-    print( ohlcv_histories_normalised.shape )
-    print( len( ohlcv_histories_normalised ) )
-    '''
-
-    #DEBUG: Make a normal loop
-    print( "\n\n\n****************************************************" )
-    start_time = timeit.default_timer()
-    count = 0
-    ohlcv_histories_normalised = np.empty(( 0, 50, 6 ))
-    for i in range( len( data ) + history_points ):
-        print( "Current index:", i )
-        print( len( data[i:i + history_points] ) )
-
-        ohlcv_histories_normalised = np.append(
-            ohlcv_histories_normalised,
-            [data[i:i + history_points]],
-            #a[a[:,1].argsort()]
-            #[data_normalised[i:i + history_points]],
-            axis=0
-        )
-
-        #count+=1
-        #if count > 0: break
-    print( "Last item:", data[i:i + history_points] )
-    print( len( ohlcv_histories_normalised ) )
-    print( ohlcv_histories_normalised[0][-1] )
-    print( ohlcv_histories_normalised[-1] )
-    print( '{:.99f}'.format( timeit.default_timer() - start_time ).rstrip( '0' ).rstrip( '.' ) )
-    exit()
-
-    '''
-    #ohlcv_histories_normalised[ohlcv_histories_normalised[:,0].argsort()]
-    print( '{:.99f}'.format( timeit.default_timer() - start_time ).rstrip( '0' ).rstrip( '.' ) )
-    print( len( ohlcv_histories_normalised ) )
-    print( ohlcv_histories_normalised.shape )
-    print( 'OHLCV:', ohlcv_histories_normalised )
-    print( ohlcv_histories_normalised[0][-1] )
-    print( ohlcv_histories_normalised[-1][-1] )
-    print( len( ohlcv_histories_normalised[0] ) )
-    exit()
-
-
-    # DEBUG
-    print( "DATA:", data[-1] )
-    print( "DATA:", len( data ) )
-    print( "DATA - history_len:", range( len( data_normalised ) - history_points ) )
-    print( "All histories normalized:", ohlcv_histories_normalised )
-    '''
-
-    ohlcv_histories_close = np.array( [data[:, meta.column_index['close']][i + history_points].copy() for i in range( len( data ) - history_points )] )
-    ohlcv_histories_close = np.expand_dims( ohlcv_histories_close, -1 )
-
-    unscaled_dates = np.array( [data[:, meta.column_index['date']][i + history_points].copy() for i in range( len( data ) - history_points )] )
-    unscaled_dates = np.expand_dims( unscaled_dates, -1 )
-
-    '''
-    print( "ohlcv_histories_close:", ohlcv_histories_close )
-    print( "ohlcv_histories_close len:", len( ohlcv_histories_close ) )
-
-    close_normaliser = preprocessing.MinMaxScaler()
-    ohlcv_histories_close_normalized = close_normaliser.fit_transform( ohlcv_histories_close )
-    close_normaliser.fit( ohlcv_histories_close )
-
-    print( 'First (scaled):', ohlcv_histories_close_normalized )
-    print( ohlcv_histories_normalised )
-    exit()
-    # ohlcv_histories_normalised[All stocks dates][50 previous days]
-    print( "---->", ohlcv_histories_normalised[-1][-1][4] )
-    first_item = ohlcv_histories_normalised[-1][0][4]
-    last_item = ohlcv_histories_normalised[-1][-1][4]
-    last_item = 0.86674663
-    print( first_item )
-    print( last_item )
-    print( 'First:', close_normaliser.inverse_transform( [[first_item]] ) )
-    print( 'Last:', close_normaliser.inverse_transform( [[last_item]] ) )
-
-
-    dates_normalized = close_normaliser.fit_transform( unscaled_dates )
-    close_normaliser.fit( unscaled_dates )
-    print( "DN:", dates_normalized )
-    date_first_item = dates_normalized[0][0]
-    date_last_item = dates_normalized[-1][0]
-    date_last_item = 0.000821580173
-    print( date_first_item )
-    print( date_last_item )
-    print( 'First:', close_normaliser.inverse_transform( [[date_first_item]] ) )
-    print( 'Last:', close_normaliser.inverse_transform( [[date_last_item]] ) )
-    exit()
-    #End DEBUG
-    '''
-
-    # Get normalized 'close' values, so model can be trained to predict this item
-    scaled_y = np.array( [data_normalised[:, meta.column_index['close']][i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
-    scaled_y = np.expand_dims( scaled_y, -1 ) #NICE: each item added to its own array and this is super fast
-
-    unscaled_y = np.array( [data[:, meta.column_index['close']][i + history_points].copy() for i in range( len( data ) - history_points )] )
-    unscaled_y = np.expand_dims( unscaled_y, -1 ) #NICE: each item added to its own array and this is super fast
-
-    y_normaliser = preprocessing.MinMaxScaler()
-    y_normaliser.fit( unscaled_y )
-
-    # Get dates in a single column
-    dates = np.array( [data[:, meta.column_index['date']][i + history_points].copy() for i in range( len( data ) - history_points)] )
+    feat_ohlcv_histories_close = np.array( [data[:, meta.column_index['close']][i + history_points].copy() for i in range( len( data ) - history_points )] )
+    feat_ohlcv_histories_close = np.expand_dims( feat_ohlcv_histories_close, -1 )
 
     # Normalize technical indictors
-    technical_indicators_normalised = stock_indicators.get_technical_indicators( preprocessing.MinMaxScaler(), ohlcv_histories_normalised )
+    feat_technical_indicators_normalised = stock_indicators.get_technical_indicators( preprocessing.MinMaxScaler(), feat_ohlcv_histories_normalised )
 
-    assert ohlcv_histories_normalised.shape[0] == scaled_y.shape[0] == technical_indicators_normalised.shape[0]
-    return dates, ohlcv_histories_normalised, technical_indicators_normalised, scaled_y, unscaled_y, y_normaliser
+    # Get normalized 'close' values, so model can be trained to predict this item
+    labels_scaled = np.array( [data_normalised[:, meta.column_index['close']][i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
+    labels_scaled = np.expand_dims( labels_scaled, -1 ) #NICE: each item added to its own array and this is super fast
+
+    labels_unscaled = np.array( [data[:, meta.column_index['close']][i + history_points].copy() for i in range( len( data ) - history_points )] )
+    labels_unscaled = np.expand_dims( labels_unscaled, -1 ) #NICE: each item added to its own array and this is super fast
+
+    label_normaliser = preprocessing.MinMaxScaler()
+    label_normaliser.fit( labels_unscaled )
+
+    # Get dates in a single column
+    dates = np.array( [data[:, meta.column_index['date']][i + history_points].copy() for i in range( len( data ) - history_points )] )
+
+    assert feat_ohlcv_histories_normalised.shape[0] == labels_scaled.shape[0] == feat_technical_indicators_normalised.shape[0]
+    return dates, feat_ohlcv_histories_normalised, feat_technical_indicators_normalised, labels_scaled, labels_unscaled, label_normaliser
 
 class Preprocess:
     def __init__( self, test_split=False ):
         self.dates, self.ohlcv_histories, self.technical_indicators, \
         self.scaled_y, self.unscaled_y, \
-        self.y_normaliser = prepare( get.dataset() )
+        self.y_normaliser = prepare_labels_feat( get.dataset() )
 
         print( "\n\n** Print data shapes: " )
         print( "*********************************" )
