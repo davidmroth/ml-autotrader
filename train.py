@@ -94,8 +94,11 @@ plt.add_note(
 )
 plt.create()
 
+#TODO: Put accuracy on a seperate scale shared by the same X axis
 plt = Plot( 'Training_loss', start=0, end=-1, xlabel='Epochs', ylabel='Loss' )
 plt.title( 'Model Training vs. Validation Loss' )
 plt.graph( y_axis=history.history['loss'], label='Train Loss' )
-plt.graph( y_axis=history.history['val_loss'], label='Train Loss' )
+plt.graph( y_axis=history.history['val_loss'], label='Test Loss' )
+plt.graph( y_axis=history.history['accuracy'], label='Train accuracy' )
+plt.graph( y_axis=history.history['val_accuracy'], label='Test accuracy' )
 plt.create()

@@ -1,21 +1,6 @@
-import ml_trader.utils.lazy as lazy_import
 import ml_trader.utils.file as file
 import ml_trader.config as config
 import ml_trader.utils.data.meta as meta
-
-# Lazy loading...
-optimizers = lazy_import.lazy_module( 'keras.optimizers' )
-Model = lazy_import.lazy_callable( 'keras.models.Model' )
-Dense = lazy_import.lazy_callable( 'keras.layers.Dense' )
-Input = lazy_import.lazy_callable( 'keras.layers.Input' )
-LSTM = lazy_import.lazy_callable( 'keras.layers.LSTM' )
-Dropout = lazy_import.lazy_callable( 'keras.layers.Dropout' )
-Activation = lazy_import.lazy_callable( 'keras.layers.Activation' )
-concatenate = lazy_import.lazy_callable( 'keras.layers.concatenate' )
-load_model = lazy_import.lazy_callable( 'keras.models.load_model' )
-
-from keras.utils import plot_model
-from keras.callbacks import EarlyStopping
 
 
 class Technical_Model:
@@ -28,6 +13,16 @@ class Technical_Model:
 
     def build( self ):
         print( " **Initializing model..." )
+
+        # Lazy loading...
+        from keras import optimizers
+        from keras.models import Model
+        from keras.layers import Input
+        from keras.layers import Dense
+        from keras.layers import LSTM
+        from keras.layers import Dropout
+        from keras.layers import Activation
+        from keras.layers import concatenate
 
         # define two sets of inputs
         lstm_input = Input( shape=( config.history_points, self.data_column_size ), name='lstm_input' )
@@ -55,7 +50,7 @@ class Technical_Model:
         # then output a single value
         self.model = Model( inputs=[lstm_branch.input, technical_indicators_branch.input], outputs=z )
         adam = optimizers.Adam( lr=0.0005 )
-        self.model.compile( optimizer=adam, loss='mse' )
+        self.model.compile( optimizer=adam, loss='mse', metrics=['accuracy'] )
 
         return self._check_model( self.model )
 
@@ -72,6 +67,8 @@ class Technical_Model:
     def _save_model_visualization( self, model ):
         file_path = file.timestamp( config.model_visualization_filepath )
         file.create_path_if_needed( file_path )
+
+        from keras.utils import plot_model
         plot_model( model, to_file=file_path, show_shapes=True )
 
     def get_model( self ):
@@ -89,17 +86,35 @@ class Technical_Model:
         if not file.exists( config.model_filepath ):
             raise Exception( "*** Model ('%s') does not exist! Please train." % config.model_filepath )
 
+        # Lazy loading...
+        from keras.models import load_model
+
         # Load pretrianed model
         self.model = load_model( config.model_filepath )
 
         return self._check_model( self.model )
 
     def train( self, x, y, x_test, y_test ):
-        # x = new input data
+        '''
+        # x = new input data / features
         # y = predicted data
+
         # Sample - a single row of data
         # Batch - the number of samples to work through before updating the internal model parameters
         # Epoc - the number times that the learning algorithm will work through the entire training dataset
+
+        Assume you have a dataset with 200 samples (rows of data) and you
+        choose a batch size of 5 and 1,000 epochs.
+
+        This means that the dataset will be divided into 40 batches, each with
+        five samples. The model weights will be updated after each batch of
+        five samples.
+
+        This also means that one epoch will involve 40 batches or 40 updates
+        to the model.
+        '''
+
+        #from keras.callbacks import EarlyStopping
 
         return self.model.fit( x=x, y=y, \
             batch_size=config.batch_size, epochs=config.epochs, \

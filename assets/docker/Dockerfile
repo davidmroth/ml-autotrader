@@ -10,9 +10,9 @@ copy requirements.txt /tmp
 run pip install -r /tmp/requirements.txt
 
 # Install OS dependencies
-run apt update
-run apt install graphviz
-run apt purge git -y
+run apt-get update
+run apt-get install -y graphviz
+run apt-get purge -y git
 
 # User conveniences
 run echo "alias ll='ls -lah --group-directories-first --color=auto'" > /root/.bashrc
