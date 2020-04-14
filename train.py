@@ -77,6 +77,7 @@ plt.add_note(
         r'Symbol: %s' % ( config.stock_symbol, ),
         r'MSE: %.2f' % ( mse, ),
         r'Epochs: %d' % ( config.epochs, ),
+        r'Data Points: %d' % ( unscaled_y_test.shape[0], ),
         r'History Points: %d' % ( config.history_points, )
     )
 )

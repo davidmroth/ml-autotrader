@@ -33,7 +33,8 @@ class Plot:
 
         props = dict( boxstyle='round', facecolor='wheat', alpha=0.5 )
         plt.gcf().text(
-            0.135, 0.125,
+            #0.135, 0.125,
+            0.1, 0.1,
             textstr,
             fontsize=14,
             verticalalignment='top',

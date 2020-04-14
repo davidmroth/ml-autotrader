@@ -8,7 +8,7 @@ dataset_type = 'daily'
 '''
 User preferences
 '''
-timezone = 'Europe/Moscow'
+timezone = 'America/Chicago'
 
 
 '''
@@ -37,7 +37,7 @@ Model hyperparamters
 # past 50 days of stock history to make a prediction about just the next day.
 
 history_points = 50 # Size of LSTM input / Can't be less than 13
-technical_indictors_input_size = 1 # Size of technical indictors input
+technical_indictors_input_size = 2 # Size of technical indictors input
 shuffle = True
 batch_size = 32
-epochs = 50 # Number of training runs ( typlically, the more the better )
+epochs = 60 # Number of training runs ( typlically, the more the better )

@@ -17,17 +17,20 @@ def _calc_ema( values, time_period ):
 
     return ema_values[-1]
 
-def get_technical_indicators( min_scaler, histories_normalized ):
+def get_technical_indicators( min_scaler, ohlcv_histories ):
     technical_indicators = []
 
-    for history in histories_normalized:
+    for history in ohlcv_histories:
         '''
         SMA (Simple Moving Average) of the closing price
         '''
-        sma = np.mean( history[:, meta.column_index['close']] )
-        technical_indicators.append( np.array( [sma] ) )
-        #macd = _calc_ema( history, 12 ) - _calc_ema( history, 26 ) # Moving average convergence divergence
-        # technical_indicators.append(np.array([sma,macd,]))
+        sma50 = np.mean( history[:, meta.column_index['close']] )
 
-    technical_indicators = np.array( technical_indicators )
-    return min_scaler.fit_transform( technical_indicators )
+        '''
+        Moving average convergence divergence
+        '''
+        macd = _calc_ema( history, 12 ) - _calc_ema( history, 26 )
+        #technical_indicators.append( np.array( [sma50] ) )
+        technical_indicators.append( np.array( [sma50,macd,] ) )
+
+    return min_scaler.fit_transform( np.array( technical_indicators ) )

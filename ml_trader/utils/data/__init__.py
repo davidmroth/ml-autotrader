@@ -19,36 +19,64 @@ import ml_trader.utils.data.imports.get as get
 from pprint import pprint
 from sklearn import preprocessing
 
-#from ml_trader.utils.compute import earnings
 
+def increase_decrease_same( df ):
+    print( df.head() )
+    if df['open_change'] > df['open']: return -1
+    elif df['open_change'] < df['open']: return 1
+    return 0
 
-def prepare_labels_feat( data ):
+def prepare_labels_feat( df ):
     '''
     Transform data
     '''
 
     history_points = config.history_points
 
+    #
+    # Feature engineering
+    #
+
+    # Modify column header names
+    new_column_names = df.columns.values
+    new_column_names[1] = 'open'
+    new_column_names[2] = 'high'
+    new_column_names[3] = 'low'
+    new_column_names[4] = 'close'
+    new_column_names[5] = 'volume'
+    df.columns = new_column_names
+
+    # Sort dataframe ascending
+    df.sort_values( 'date', inplace=True, ascending=True )
+
+    # Get next row's open value, and add it to current row as a new column
+    df['open_change'] = df['open'].shift( -1 )
+
+    # Change 'open_change' column to represent if the next day was: higher(1), lower(-1), or no change (0)
+    df['open_change'] = np.where( df['open_change'] < df['open'], -1, df['open_change'] ).astype( int )
+    df['open_change'] = np.where( df['open_change'] > df['open'], 1, df['open_change'] ).astype( int )
+    df['open_change'] = np.where( df['open_change'] == df['open'], 0, df['open_change'] ).astype( int )
+
+    df['date'] = pd.to_datetime( df['date'] ) # Convert to datetime
+    df['weekday_num'] = df['date'].apply( lambda x: x.weekday() ) # Get weekday_num as a feature
+    df['date'] = df['date'].apply( utils.convert_to_timestamp ) # Convert to unix timestamp which can be normalized
+
+    # Copy values to seperate numpy array
+    dates = df['date'].values
+    open_change = df['open_change'].values
+
+    # remove columns from data frame
+    df = df.drop( 'date', axis=1 )
+    df = df.drop( 'open_change', axis=1 )
+
     # The first day of trading that stock often looked anomalous due to the massively high volume (IPO).
     # This inflated max volume value also affected how other volume values in the dataset were scaled when normalising the data,
     # so we drop the oldest data point out of every set)
-    data.sort_values( 'date', inplace=True, ascending=True )
-    data['date'] = pd.to_datetime( data['date'] ) # Convert to datetime
-    data['weekday_num'] = data['date'].apply( lambda x: x.weekday() ) # Get weekday_num as a feature
-    data['date'] = data['date'].apply( utils.convert_to_timestamp ) # Convert to unix timestamp which can be normalized
-    dates = data['date'].values
-
-    # remove date column
-    data = data.drop( 'date', axis=1 )
-
-    # Remove first date since IPO's tend to swing wildly on the first day
-    # of open and may confuse the model
-    data = data.iloc[1:].values # Convert to numpy array
+    data = df.iloc[1:].values # Convert to numpy array
 
     # Normalise the data — scale it between 0 and 1 — to improve how quickly our network converges
     normaliser = preprocessing.MinMaxScaler()
     data_normalised = normaliser.fit_transform( data ) # Normalize all columns
-
 
     '''
     Using the last {history_points} open close high low volume data points, predict the next value
@@ -56,12 +84,11 @@ def prepare_labels_feat( data ):
     Lob off the first x items as they won't include x previous date
     x = history_points
     '''
-    #TODO: Figure out why 'i+1:i + history_points+1' works, but not i:i + history_points
-    #feat_ohlcv_histories_normalised = np.array( [data_normalised[i+1:i + history_points+1].copy() for i in range( len( data_normalised ) - history_points )] )
-    feat_ohlcv_histories_normalised = np.array( [data_normalised[i:i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
 
-    # Normalize technical indictors
-    feat_technical_indicators_normalised = stock_indicators.get_technical_indicators( preprocessing.MinMaxScaler(), feat_ohlcv_histories_normalised )
+    #TODO: Figure out why 'i+1:i + history_points+1' works, but not i:i + history_points
+    feat_ohlcv_histories_normalised = np.array( [data_normalised[i+1:i + history_points+1].copy() for i in range( len( data_normalised ) - history_points )] )
+    #feat_ohlcv_histories_normalised = np.array( [data_normalised[i:i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
+    #feat_ohlcv_histories = np.array( [data[i:i + history_points].copy() for i in range( len( data ) - history_points )] )
 
     # Get normalized 'close' values, so model can be trained to predict this item
     labels_scaled = np.array( [data_normalised[:, meta.column_index[meta.label_column]][i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
@@ -72,6 +99,9 @@ def prepare_labels_feat( data ):
 
     label_normaliser = preprocessing.MinMaxScaler()
     label_normaliser.fit( labels_unscaled )
+
+    # Normalize technical indictors
+    feat_technical_indicators_normalised = stock_indicators.get_technical_indicators( preprocessing.MinMaxScaler(), feat_ohlcv_histories_normalised )
 
     # Get dates in a single column
     dates = np.array( [dates[i + history_points].copy() for i in range( len( data ) - history_points )] )
@@ -110,6 +140,7 @@ class Preprocess:
         return self.y_normaliser
 
     def get_history_for_date( self, date ):
+        print( self.dates )
         dates = np.array( [datetime.datetime.fromtimestamp( i ) for i in self.dates] )
         date_min = dates.min()
         date_max = dates.max()

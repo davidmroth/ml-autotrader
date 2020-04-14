@@ -12,9 +12,13 @@ BUGS:
 - Create folders when training, downloading, etc... (Folders: analysis, models, data, etc...)
 
 Fix overfitting:
-The validation loss is increasing while the training loss is decreasing.
+  - The validation loss is increasing while the training loss is decreasing.
 
-Dealing with such a Model:
+Dealing with a Model that overfits:
 - Data Preprocessing: Standardizing and Normalizing the data.
 - Model compelxity: Check if the model is too complex. Add dropout, reduce number of layers or number of neurons in each layer.
 - Learning Rate and Decay Rate: Reduce the learning rate, a good starting value is usually between 0.0005 to 0.001. Also consider a decay rate of 1e-6.
+
+
+TODO:
+- https://stackoverflow.com/questions/54847320/classification-and-regression-using-the-same-neural-network-using-keras

@@ -51,6 +51,7 @@ compute.earnings( buys, sells )
 real_mse = np.mean( np.square( unscaled_y_test - y_test_predicted ) )
 scaled_mse = real_mse / ( np.max( unscaled_y_test ) - np.min( unscaled_y_test ) ) * 100
 print( "Mean Squared Error (MSE): %.2f" % scaled_mse )
+print( 'Num of predictions ran: %d' % ( predicted_price_yhat.shape[0], ) )
 
 
 '''
@@ -65,7 +66,8 @@ plt.add_note(
         r'Symbol: %s' % ( config.stock_symbol, ),
         r'MSE: %.2f' % ( scaled_mse, ),
         r'Epochs: %d' % ( config.epochs, ),
-        r'History Points: %d' % (config.history_points, )
+        r'History Points: %d' % (config.history_points, ),
+        r'Total days: %d' % ( predicted_price_yhat.shape[0], )
     )
 )
 

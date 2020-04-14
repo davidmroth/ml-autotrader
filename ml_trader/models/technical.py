@@ -45,7 +45,9 @@ class Technical_Model:
         # combine the output of the two branches
         combined = concatenate( [lstm_branch.output, technical_indicators_branch.output], name='concatenate' )
 
+
         z = Dense( 64, activation="sigmoid", name='dense_pooling' )( combined )
+
         # Linear is better for regression instead of classification
         z = Dense( 1, activation="linear", name='dense_out' )( z )
 
@@ -63,8 +65,16 @@ class Technical_Model:
         print( "******************************************************\n\n" )
 
         if model.layers[1].output_shape[1] != config.history_points or model.layers[1].output_shape[2] != self.data_column_size:
-            raise Exception( "*** Please retrain this model. Config is out of sync with the saved model!" )
+            print(
+                '\n\nModel expects: ( %s, %s )\nData configured: ( %s, %s )\n'
+                % ( model.layers[1].output_shape[1],
+                model.layers[1].output_shape[2],
+                config.history_points,
+                self.data_column_size )
+            )
+            print( "*** Please retrain this model. Config is out of sync with the saved model!\n\n" )
 
+            raise Exception()
         return self
 
     def _save_model_visualization( self, model ):
