@@ -3,6 +3,9 @@ import json
 import pytz
 import datetime
 import pandas as pd
+import datetime
+
+from dateutil import rrule
 
 import ml_trader.config as config
 
@@ -32,3 +35,32 @@ def convert_to_datetime_str( x ):
 def convert_to_datetime( x ):
     """Convert unix time (int) to date"""
     return datetime.datetime.fromtimestamp( x )
+
+
+def get_next_trade_day( day ):
+    holidays = [
+        '5/25/2020',
+        '7/3/2020',
+        '9/7/2020',
+        '11/26/2020',
+        '12/25/2020'
+    ]
+
+    # Create a rule to recur every weekday starting today
+    r = rrule.rrule(
+        rrule.DAILY,
+        byweekday = [rrule.MO, rrule.TU, rrule.WE, rrule.TH, rrule.FR],
+        dtstart = datetime.date.today()
+    )
+
+    # Create a rruleset
+    rs = rrule.rruleset()
+
+    # Attach our rrule to it
+    rs.rrule( r )
+
+    # Add holidays as exclusion days
+    for exdate in holidays:
+        rs.exdate( datetime_object = datetime.strptime( exdate, '%m/%d/%Y' ) )
+
+    print rs[0]
