@@ -32,9 +32,6 @@ technical_model = Technical_Model( y_normaliser ).load() # Load model
 y_test_predicted = technical_model.predict( [ohlcv_test, tech_ind_test] )
 
 
-utils.get_next_trade_day( '02/23/2020' )
-
-
 '''
 Buy / Sell Trade Logic
 '''

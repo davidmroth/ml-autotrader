@@ -7,26 +7,31 @@ import ml_trader.utils.data.meta as meta
 class Insight:
     summary_data = []
 
-    def __init__( self, data ):
+    def __init__( self, data, first_day ):
+        # TODO: not completed; for getting next day's
+        # data for better analysis
+        self.first_day = first_day
         self.data = data
 
-    def get_trade_insight( self, date, price_today, predicted_price_tomorrow ):
+    def get_trade_insight( self, date, price_today, predicted_price_tomorrow, last=False ):
         # I can only predict the next day, but I need all of today's stats for today, so I
         # can only work at the end of the day. That means I have to buy stock
         # low or high on the following day based on the output of the model
 
         # Input the ochlv (for the previous 50 days?)
         # Output the following day's close price
-
         change = False
         delta = np.round( predicted_price_tomorrow - price_today, 2 ).item()
         day = utils.convert_to_datetime( date )
 
-        #TODO: get actual next trading day
-        #next_day = day + datetime.timedelta( days=1 )
-        #TODO: Add trading after a holidy indictor for the model, so it will learn
-        # to recognize trading patterns after a holiday (?)
-        next_day = 'the next trading day'
+        if last:
+            next_day = "{:%b %d, %Y}".format(
+                utils.DateManager()
+                    .init_next_biz_day( utils.convert_to_datetime( self.first_day ) )
+                    .get_next_trade_day( day )
+            )
+        else:
+            next_day = "next trading day"
 
         percent_change = abs( float( '{:.2f}'.format( ( 100 * ( 1 - ( predicted_price_tomorrow / price_today ) ) ).item() ) ) )
         decrease_increase = 'decrease' if delta < 0 else 'increase'
