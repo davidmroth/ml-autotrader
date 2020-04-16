@@ -1,4 +1,5 @@
 import time
+import json
 import pytz
 import datetime
 import pandas as pd
@@ -6,12 +7,22 @@ import pandas as pd
 import ml_trader.config as config
 
 
-local_tz = pytz.timezone( config.timezone )
+class DateManager:
+    file_tz = pytz.utc
+    local_tz = pytz.timezone( config.timezone )
 
-def convert_to_timestamp( x ):
-    """Convert date objects to integers"""
-    local_time = x.replace( tzinfo=pytz.utc ).astimezone( local_tz )
-    return time.mktime( local_time.to_pydatetime().timetuple() )
+    def __init__( self ):
+        with open( config.metadata_filepath ) as f:
+            data = json.load( f )
+
+        self.file_tz = pytz.timezone( data['Time Zone'] )
+
+    def convert_to_timestamp( self, x ):
+        """Convert date objects to integers"""
+        #NOTE: Timezone conversion is not needed
+        #local_time = x.replace( tzinfo=self.file_tz ).astimezone( self.local_tz )
+        #return time.mktime( local_time.to_pydatetime().timetuple() )
+        return time.mktime( x.to_pydatetime().timetuple() )
 
 def convert_to_datetime_str( x ):
     """Convert unix time (int) to date"""

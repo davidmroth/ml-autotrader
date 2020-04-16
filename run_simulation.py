@@ -9,6 +9,7 @@ from ml_trader.utils import compute
 from ml_trader.utils.analysis.plot import Plot
 from ml_trader.utils.file import timestamp
 from ml_trader.utils.data import Preprocess
+import ml_trader.utils as utils
 
 
 '''

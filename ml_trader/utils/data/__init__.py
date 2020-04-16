@@ -30,12 +30,14 @@ def prepare_labels_feat( df ):
     '''
     Transform data
     '''
-
+    dm = utils.DateManager()
     history_points = config.history_points
 
     #
     # Feature engineering
     #
+
+    df = df.sort_values( ['date'] ).reset_index( drop=True )
 
     # Modify column header names
     new_column_names = df.columns.values
@@ -59,7 +61,7 @@ def prepare_labels_feat( df ):
 
     df['date'] = pd.to_datetime( df['date'] ) # Convert to datetime
     df['weekday_num'] = df['date'].apply( lambda x: x.weekday() ) # Get weekday_num as a feature
-    df['date'] = df['date'].apply( utils.convert_to_timestamp ) # Convert to unix timestamp which can be normalized
+    df['date'] = df['date'].apply( dm.convert_to_timestamp ) # Convert to unix timestamp which can be normalized
 
     # Copy values to seperate numpy array
     dates = df['date'].values
@@ -78,13 +80,13 @@ def prepare_labels_feat( df ):
     normaliser = preprocessing.MinMaxScaler()
     data_normalised = normaliser.fit_transform( data ) # Normalize all columns
 
+
     '''
     Using the last {history_points} open close high low volume data points, predict the next value
     Loop through all the stock data, and add build a normalized dataset that include x number of ohlcv history items for each stock date
     Lob off the first x items as they won't include x previous date
     x = history_points
     '''
-
     #TODO: Figure out why 'i+1:i + history_points+1' works, but not i:i + history_points
     feat_ohlcv_histories_normalised = np.array( [data_normalised[i+1:i + history_points+1].copy() for i in range( len( data_normalised ) - history_points )] )
     #feat_ohlcv_histories_normalised = np.array( [data_normalised[i:i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
@@ -104,7 +106,7 @@ def prepare_labels_feat( df ):
     feat_technical_indicators_normalised = stock_indicators.get_technical_indicators( preprocessing.MinMaxScaler(), feat_ohlcv_histories_normalised )
 
     # Get dates in a single column
-    dates = np.array( [dates[i + history_points].copy() for i in range( len( data ) - history_points )] )
+    dates = np.array( [dates[i+1+history_points].copy() for i in range( len( data ) - history_points )] )
 
     assert feat_ohlcv_histories_normalised.shape[0] == labels_scaled.shape[0] == feat_technical_indicators_normalised.shape[0]
     return dates, feat_ohlcv_histories_normalised, feat_technical_indicators_normalised, labels_scaled, labels_unscaled, label_normaliser

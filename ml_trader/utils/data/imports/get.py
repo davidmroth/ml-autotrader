@@ -1,5 +1,6 @@
 import six
 import json
+import datetime
 import pandas as pd
 
 import ml_trader.utils.file as file
@@ -9,8 +10,26 @@ from pprint import pprint
 from alpha_vantage.timeseries import TimeSeries
 
 
+def modify_metadata( metadata ):
+    updated_names_mapping = {
+        "1. Information": "Information",
+        "2. Symbol": "Symbol",
+        "3. Last Refreshed": "Last Refreshed",
+        "4. Output Size": "Output Size",
+        "5. Time Zone": "Time Zone"
+    }
+
+    for oldname, newname in updated_names_mapping.items():
+        metadata[newname] = metadata[oldname]
+        del metadata[oldname]
+
+    metadata['Last Downloaded'] = '{:%b %d, %Y %H:%M}'.format( datetime.datetime.now() )
+
+    return metadata
+
 def retrieve( symbol, time_window, force=False ):
     filepath = config.data_filepath % ( symbol.upper(), time_window )
+    json_filepath = config.metadata_filepath.format( datetime.datetime.now() )
 
     if not file.exists( filepath ) or force != False:
         credentials = json.load( open( 'creds.json', 'r' ) )
@@ -32,10 +51,15 @@ def retrieve( symbol, time_window, force=False ):
         # Create directory if don't exist
         file.create_path_if_needed( filepath )
 
+        # Modify and save metadata
+        with open( json_filepath, 'w', encoding='utf-8' ) as f:
+            json.dump( modify_metadata( meta_data ), f )
+
         # Save to csv while respecting configuration
         data.to_csv( filepath )
 
-        return data
+        # Important to reset the index, so output is inline with csv import
+        return data.reset_index()
 
     # If file already exist, just read and return data
     else:
@@ -54,13 +78,11 @@ def dataset( *args, **kargs ):
     else:
         raise Exception( "Error!" )
 
-    # Sort ascending and prevent date from being indexed
-    data = data.sort_values( ['date'] ).reset_index( drop=True )
-
     # Show dataframe stats
     print( "\nDataset for {} (first 50 rows):".format( config.stock_symbol.upper() ) )
     pprint( data.head( 50 ) )
     pprint( data.tail( 50 ) )
     print( "\n\n" )
 
+    # Sort ascending and prevent date from being indexed
     return data

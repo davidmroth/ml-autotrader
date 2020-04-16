@@ -3,7 +3,7 @@ import numpy as np
 
 import ml_trader.config as config
 import ml_trader.utils.data.meta as meta
-import ml_trader.utils.analysis.insight as insight
+from ml_trader.utils.analysis.insight import Insight
 
 
 def do_trade( model, packed_trade_data, y_normaliser ):
@@ -17,6 +17,8 @@ def do_trade( model, packed_trade_data, y_normaliser ):
 
     # Trasnform data
     ohlcv_test, tech_ind_test, y_test_dates = packed_trade_data
+
+    insight = Insight( ohlcv_test )
 
     #TODO: Do I need start and end? If 0 ='s the begining the array, and -1
     # ='s the 'end' of array, which whould mean the whole array

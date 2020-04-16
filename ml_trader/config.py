@@ -15,6 +15,7 @@ timezone = 'America/Chicago'
 File paths
 '''
 data_filepath = 'data/stock/%s_%s.csv'
+metadata_filepath = 'data/stock/meta_data.json'
 model_filepath = 'data/models/technical_model.h5'
 model_visualization_filepath = 'data/analysis/model_visualization_%s.png'
 prediction_analysis = 'data/analysis/{}_out_%s.png'
