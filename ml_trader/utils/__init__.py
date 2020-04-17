@@ -60,7 +60,7 @@ class DateManager:
         return time.mktime( x.to_pydatetime().timetuple() )
 
     def get_next_trade_day( self, day ):
-        index = ( self.startday - day ).days - 1
+        index = ( self.startday - day ).days + 1
         return self.next_biz_day_index[index]
 
 def convert_to_datetime_str( x ):

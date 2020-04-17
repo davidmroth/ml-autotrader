@@ -34,11 +34,10 @@ def do_trade( model, packed_trade_data, y_normaliser ):
     predicted_price_yhat = np.array( [None] )
 
     # Trasnform data
-    ohlcv_test, tech_ind_test, y_test_dates = packed_trade_data
+    ohlcv_test, tech_ind_test, y_test_dates, unscaled_y_data = packed_trade_data
 
     #TODO: Merge date column to np array and then I can do:
-    # result = np.where(arr == 15) inside insight
-    insight = Insight( ohlcv_test[1:-1], y_test_dates[-1] )
+    insight = Insight( unscaled_y_data, y_test_dates )
 
     #TODO: Do I need start and end? If 0 ='s the begining the array, and -1
     # ='s the 'end' of array, which whould mean the whole array

@@ -35,7 +35,7 @@ y_test_predicted = technical_model.predict( [ohlcv_test, tech_ind_test] )
 '''
 Buy / Sell Trade Logic
 '''
-trade_data = ( ohlcv_test, tech_ind_test, y_test_dates )
+trade_data = ( ohlcv_test, tech_ind_test, y_test_dates, unscaled_y_test )
 predicted_price_yhat, buys, sells = trade_logic.do_trade( technical_model, trade_data, y_normaliser )
 
 
