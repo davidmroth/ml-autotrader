@@ -68,7 +68,7 @@ def do_trade( model, packed_trade_data, y_normaliser ):
         # For plotting: append predicted prices into an array
         predicted_price_yhat = np.append( predicted_price_yhat, predicted_price_tomorrow )
 
-        # Print insight
+        # Print insight 
         insight.get_trade_insight( date, price_today, predicted_price_tomorrow, is_last )
 
     return ( predicted_price_yhat, buys, sells )
