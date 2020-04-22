@@ -80,7 +80,6 @@ def prepare_labels_feat( df ):
     normaliser = preprocessing.MinMaxScaler()
     data_normalised = normaliser.fit_transform( data ) # Normalize all columns
 
-
     '''
     Using the last {history_points} open close high low volume data points, predict the next value
     Loop through all the stock data, and add build a normalized dataset that include x number of ohlcv history items for each stock date
@@ -88,9 +87,9 @@ def prepare_labels_feat( df ):
     x = history_points
     '''
     #TODO: Figure out why 'i+1:i + history_points+1' works, but not i:i + history_points
-    feat_ohlcv_histories_normalised = np.array( [data_normalised[i+1:i + history_points+1].copy() for i in range( len( data_normalised ) - history_points )] )
     #feat_ohlcv_histories_normalised = np.array( [data_normalised[i:i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
-    #feat_ohlcv_histories = np.array( [data[i:i + history_points].copy() for i in range( len( data ) - history_points )] )
+    feat_ohlcv_histories_normalised = np.array( [data_normalised[i+1:i + history_points+1].copy() for i in range( len( data_normalised ) - history_points )] )
+    feat_ohlcv_histories = np.array( [data[i:i + history_points].copy() for i in range( len( data ) - history_points )] )
 
     # Get normalized 'close' values, so model can be trained to predict this item
     labels_scaled = np.array( [data_normalised[:, meta.column_index[meta.label_column]][i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
@@ -103,7 +102,9 @@ def prepare_labels_feat( df ):
     label_normaliser.fit( labels_unscaled )
 
     # Normalize technical indictors
-    feat_technical_indicators_normalised = stock_indicators.get_technical_indicators( preprocessing.MinMaxScaler(), feat_ohlcv_histories_normalised )
+    #feat_technical_indicators_normalised = stock_indicators.get_technical_indicators( preprocessing.MinMaxScaler(), feat_ohlcv_histories )
+    feat_technical_indicators_normalised = stock_indicators.get_technical_indicators_talib( preprocessing.MinMaxScaler(), df, len( data ) - history_points )
+    #feat_technical_indicators_normalised = stock_indicators.get_technical_indicators( data )
 
     # Get dates in a single column
     dates = np.array( [dates[i+1+history_points].copy() for i in range( len( data ) - history_points )] )

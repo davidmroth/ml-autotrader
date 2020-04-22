@@ -1,7 +1,7 @@
 '''
 Stock settings
 '''
-stock_symbol = 'msft'
+stock_symbol = 'spy'
 dataset_type = 'daily'
 
 
@@ -38,7 +38,7 @@ Model hyperparamters
 # past 50 days of stock history to make a prediction about just the next day.
 
 history_points = 50 # Size of LSTM input / Can't be less than 13
-technical_indictors_input_size = 2 # Size of technical indictors input
+technical_indictors_input_size = 10 # Size of technical indictors input
 shuffle = True
 batch_size = 32
-epochs = 60 # Number of training runs ( typlically, the more the better )
+epochs = 80 # Number of training runs ( typlically, the more the better )
