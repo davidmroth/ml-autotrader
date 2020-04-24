@@ -4,6 +4,8 @@ import ml_trader.utils.file as file
 import ml_trader.config as config
 import ml_trader.utils.data.meta as meta
 
+from ml_trader.models.importance_sampling.training import ImportanceTraining
+
 
 class Technical_Model:
     model = False
@@ -17,6 +19,7 @@ class Technical_Model:
         print( " **Initializing model..." )
 
         # Lazy loading...
+        from keras import regularizers
         from keras import optimizers
         from keras.models import Model
         from keras.layers import Input
@@ -34,12 +37,14 @@ class Technical_Model:
         #x = LSTM( config.history_points, name='lstm_0' )( lstm_input )
         x = LSTM( 50, name='lstm_0' )( lstm_input )
         x = Dropout( 0.2, name='lstm_dropout_0')( x )
+        #x = Dense( 64, input_dim=20, kernel_regularizer=regularizers.l2( 0.01 ) )( x )
         lstm_branch = Model( inputs=lstm_input, outputs=x )
 
         # the second branch opreates on the second input
         y = Dense( 20, name='tech_dense_0' )( dense_input )
         y = Activation( "relu", name='tech_relu_0' )( y )
         y = Dropout( 0.2, name='tech_dropout_0' )( y )
+        #y = Dense( 64, input_dim=20, kernel_regularizer=regularizers.l2( 0.01 ) )( y )
         technical_indicators_branch = Model( inputs=dense_input, outputs=y )
 
         # combine the output of the two branches
@@ -64,7 +69,10 @@ class Technical_Model:
         print( model.summary() )
         print( "******************************************************\n\n" )
 
-        if model.layers[1].output_shape[1] != config.history_points or model.layers[1].output_shape[2] != self.data_column_size:
+        if \
+            model.layers[0].output_shape[1] != config.technical_indictors_input_size or \
+            model.layers[1].output_shape[1] != config.history_points or \
+            model.layers[1].output_shape[2] != self.data_column_size:
             print(
                 '\n\nModel expects: ( %s, %s )\nData configured: ( %s, %s )\n'
                 % ( model.layers[1].output_shape[1],
@@ -72,9 +80,9 @@ class Technical_Model:
                 config.history_points,
                 self.data_column_size )
             )
-            print( "*** Please retrain this model. Config is out of sync with the saved model!\n\n" )
+            print( "*** Please retrain this model. Dataset or config is out of sync with the saved model!\n\n" )
 
-            raise Exception()
+            raise Exception( "\n\n!!! Model needs to be retrained!!!\n\n" )
         return self
 
     def _save_model_visualization( self, model ):
@@ -119,7 +127,16 @@ class Technical_Model:
         # Load pretrianed model
         self.model = load_model( config.model_filepath )
 
+        # Check if model compatible with dataset
         return self._check_model( self.model )
+
+    def optimized_training( self, x, y, x_test, y_test ):
+        wrapped =  ImportanceTraining( self.model )
+        wrapped.fit(
+            x, y,
+            batch_size=config.batch_size, epochs=config.epochs,
+            validation_data=( x_test, y_test )
+        )
 
     def train( self, x, y, x_test, y_test ):
         '''

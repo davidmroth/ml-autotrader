@@ -31,6 +31,7 @@ Train model
 technical_model = Technical_Model( preprocess.get_y_normalizer() ) # Instantiate class
 technical_model.build() # Build model
 evalutation = technical_model.train( [ohlcv_train, tech_ind_train], y_train, [ohlcv_test, tech_ind_test], y_test ) # Train model
+#evalutation = technical_model.optimized_training( [ohlcv_train, tech_ind_train], y_train, [ohlcv_test, tech_ind_test], y_test ) # Train model
 technical_model.save() # Save trained model for later use
 
 
@@ -58,10 +59,7 @@ wildly around the regression line, so 6.08 is as good as it gets (and is in
 fact, the line of best fit).
 '''
 mse = technical_model.mean_squaured_error( unscaled_y_test, y_test_predicted )
-acc, loss = technical_model.score( [ohlcv_test, tech_ind_test], y_test )
-
 print( "Mean Squared Error: %.4f" %  mse )
-print( "Evalutation: Loss: %.4f, Accuracy: %.4f" % ( acc, loss ) )
 
 
 '''
@@ -84,6 +82,9 @@ plt.add_note(
 plt.create()
 
 #TODO: Put accuracy on a seperate scale shared by the same X axis
+acc, loss = technical_model.score( [ohlcv_test, tech_ind_test], y_test )
+print( "Evalutation: Loss: %.4f, Accuracy: %.4f" % ( acc, loss ) )
+
 plt = Plot( 'Training_loss', start=0, end=-1, xlabel='Epochs', ylabel='Loss' )
 plt.title( 'Model Training vs. Validation Loss' )
 plt.graph( y_axis=evalutation.history['loss'], label='Train Loss' )

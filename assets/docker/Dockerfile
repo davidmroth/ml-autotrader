@@ -5,10 +5,6 @@ ENV TZ=America/Chicago
 # Update timezone
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Update Python dependencies
-copy requirements.txt /tmp
-run pip install -r /tmp/requirements.txt
-
 # TA-Lib
 RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
   tar -xvzf ta-lib-0.4.0-src.tar.gz && \
@@ -18,6 +14,10 @@ RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
   make install
 
 RUN rm -R ta-lib ta-lib-0.4.0-src.tar.gz
+
+# Update Python dependencies
+copy requirements.txt /tmp
+run pip install -r /tmp/requirements.txt
 
 # Install OS dependencies
 run apt-get update

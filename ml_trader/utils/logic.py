@@ -25,6 +25,8 @@ def watch_last( iterable ):
     yield *last, True
 
 def do_trade( model, packed_trade_data, y_normaliser ):
+    track_metrics = []
+
     # Initialize
     start = 0
     end = -1
@@ -68,7 +70,12 @@ def do_trade( model, packed_trade_data, y_normaliser ):
         # For plotting: append predicted prices into an array
         predicted_price_yhat = np.append( predicted_price_yhat, predicted_price_tomorrow )
 
-        # Print insight 
-        insight.get_trade_insight( date, price_today, predicted_price_tomorrow, is_last )
+        # Print insight
+        insight.get_trade_insight( date, price_today, predicted_price_tomorrow, is_last, track_metrics )
 
+    print( "\n\nSummary of up/down predictions: \n\tTotal: {:d}\n\tCorrect: {:d}\n\tPercent correct: {:.2f}%\n".format(
+        len( track_metrics ),
+        np.sum( track_metrics ),
+        np.sum( track_metrics ) / len( track_metrics ) * 100 )
+    )
     return ( predicted_price_yhat, buys, sells )

@@ -5,6 +5,7 @@ import pandas as pd
 import math as m
 
 import ml_trader.utils.data.meta as meta
+import ml_trader.config as config
 
 
 def EMA( values, time_period ):
@@ -38,13 +39,15 @@ def get_technical_indicators_talib( min_scaler, ohlcv, len ):
 
     tech_ind["macd"], tech_ind["sigal"], tech_ind["hist"] = talib.MACD( ohlcv.close )
     tech_ind["ma10"] = talib.MA ( ohlcv.close, timeperiod=10 )
-    tech_ind["ma30"] = talib.MA( ohlcv.close, timeperiod=30 )
-    tech_ind["mom"] = talib.MOM( ohlcv.close, timeperiod=5 )
-    tech_ind["upper"], tech_ind["middle"], tech_ind["lower"] = talib.BBANDS( ohlcv.close, matype=MA_Type.T3 )
-    tech_ind['RSI'] = talib.RSI( ohlcv.close, timeperiod=14 )
+    #tech_ind["ma30"] = talib.MA( ohlcv.close, timeperiod=30 )
+    #tech_ind["mom"] = talib.MOM( ohlcv.close, timeperiod=5 )
+    #tech_ind["upper"], tech_ind["middle"], tech_ind["lower"] = talib.BBANDS( ohlcv.close, matype=MA_Type.T3 )
+    #tech_ind['RSI'] = talib.RSI( ohlcv.close, timeperiod=14 )
 
     tech_ind = tech_ind.tail( len )
 
+    # Auto set configuration
+    config.technical_indictors_input_size = tech_ind.shape[1]
     return min_scaler.fit_transform( np.array( tech_ind ) )
 
 def get_technical_indicators( min_scaler, ohlcv_histories ):

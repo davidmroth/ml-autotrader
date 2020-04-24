@@ -22,7 +22,7 @@ class Insight:
         else:
             return 'no change'
 
-    def get_trade_insight( self, date, price_today, predicted_price_tomorrow, last=False ):
+    def get_trade_insight( self, date, price_today, predicted_price_tomorrow, last=False, track_increase_decrease_predictions=False ):
         current_index =  np.where( self.dates == date )[0][0]
 
         # I can only predict the next day, but I need all of today's stats for today, so I
@@ -84,3 +84,6 @@ class Insight:
                 actual
             )
         )
+
+        if not isinstance( track_increase_decrease_predictions, bool ):
+            track_increase_decrease_predictions.append( decrease_increase == self._change_text( self.data[current_index+1][0] - price_today[0][0].item() ) )

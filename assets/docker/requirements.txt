@@ -6,3 +6,5 @@ keras
 tensorflow
 matplotlib
 pydot
+ta-lib
+blinker
