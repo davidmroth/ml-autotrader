@@ -24,7 +24,7 @@ def watch_last( iterable ):
     # Report the last value.
     yield *last, True
 
-def do_trade( model, packed_trade_data, y_normaliser ):
+def do_trade( model, packed_trade_data, normaliser ):
     track_metrics = []
 
     # Initialize
@@ -50,7 +50,7 @@ def do_trade( model, packed_trade_data, y_normaliser ):
         normalised_price_today = [[ohlcv[-1][meta.column_index[meta.label_column]]]]
 
         # Get actual price (not normalized)
-        price_today = y_normaliser.inverse_transform( normalised_price_today )
+        price_today = normaliser[meta.label_column].inverse_transform( normalised_price_today )
 
         # Get predicted 'close' price for the next day
         predicted_price_tomorrow = np.squeeze( model.predict( [[ohlcv], [ind]] ) )
@@ -73,6 +73,7 @@ def do_trade( model, packed_trade_data, y_normaliser ):
         # Print insight
         insight.get_trade_insight( date, price_today, predicted_price_tomorrow, is_last, track_metrics )
 
+    #TODO: Track average error in prediction in dollars missed by
     print( "\n\nSummary of up/down predictions: \n\tTotal: {:d}\n\tCorrect: {:d}\n\tPercent correct: {:.2f}%\n".format(
         len( track_metrics ),
         np.sum( track_metrics ),

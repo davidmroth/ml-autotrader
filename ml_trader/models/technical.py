@@ -1,3 +1,4 @@
+import os
 import numpy as np
 
 import ml_trader.utils.file as file
@@ -10,9 +11,11 @@ from ml_trader.models.importance_sampling.training import ImportanceTraining
 class Technical_Model:
     model = False
 
-    def __init__( self, y_normaliser ):
+    def __init__( self, data_scalers ):
+        self.model_name = 'my_model'
+
         # Used to invert normalision applied to predictions
-        self.y_normaliser = y_normaliser
+        self.data_scalers = data_scalers
         self.data_column_size = len( meta.column_index )
 
     def build( self ):
@@ -50,7 +53,6 @@ class Technical_Model:
         # combine the output of the two branches
         combined = concatenate( [lstm_branch.output, technical_indicators_branch.output], name='concatenate' )
 
-
         z = Dense( 64, activation="sigmoid", name='dense_pooling' )( combined )
 
         # Linear is better for regression instead of classification
@@ -60,7 +62,7 @@ class Technical_Model:
         # then output a single value
         self.model = Model( inputs=[lstm_branch.input, technical_indicators_branch.input], outputs=z )
         adam = optimizers.Adam( lr=0.0005 )
-        self.model.compile( optimizer=adam, loss='mse', metrics=['accuracy'] )
+        self.model.compile( optimizer=adam, loss='mse', metrics=['accuracy', 'mean_absolute_error'] )
 
         return self._check_model( self.model )
 
@@ -96,8 +98,8 @@ class Technical_Model:
         return self.model
 
     def save( self ):
-        file.create_path_if_needed( config.model_filepath )
-        self.model.save( config.model_filepath )
+        #file.create_path_if_needed( config.model_filepath )
+        #self.model.save( config.model_filepath )
         self._save_model_visualization( self.model )
 
     def score( self, x, y ):
@@ -131,8 +133,7 @@ class Technical_Model:
         return self._check_model( self.model )
 
     def optimized_training( self, x, y, x_test, y_test ):
-        wrapped =  ImportanceTraining( self.model )
-        wrapped.fit(
+        ImportanceTraining( self.model ).fit(
             x, y,
             batch_size=config.batch_size, epochs=config.epochs,
             validation_data=( x_test, y_test )
@@ -158,18 +159,27 @@ class Technical_Model:
         to the model.
         '''
 
-        #from keras.callbacks import EarlyStopping
+        from keras.callbacks import EarlyStopping, TensorBoard, ModelCheckpoint
+
+        # Get path and filename from config
+        file.create_path_if_needed( config.model_filepath )
+        dir = os.path.dirname( config.model_filepath )
+        fname = os.path.basename( config.model_filepath )
+
+        checkpointer = ModelCheckpoint( os.path.join( dir, fname ), save_best_only=True, verbose=1 )
+        tensorboard = TensorBoard( log_dir=os.path.join( "/tmp", self.model_name ) )
 
         return self.model.fit( x=x, y=y, \
             batch_size=config.batch_size, epochs=config.epochs, \
             shuffle=config.shuffle, validation_split=0.1, \
-            #callbacks=[EarlyStopping( monitor='val_loss', patience=10 )], \
+            #callbacks=[EarlyStopping( monitor='val_loss', patience=10 ), tensorboard, checkpointer], \
+            callbacks=[tensorboard, checkpointer], \
             validation_data=(x_test, y_test), \
             verbose=1 )
 
     def predict( self, y ):
         y_predicted = self.model.predict( y )
-        return self.y_normaliser.inverse_transform( y_predicted )
+        return self.data_scalers[meta.label_column].inverse_transform( y_predicted )
 
     def predict_raw( self, y ):
         return self.model.predict( y )

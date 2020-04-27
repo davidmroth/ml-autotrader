@@ -79,6 +79,8 @@ def prepare_labels_feat( df ):
     # Normalise the data — scale it between 0 and 1 — to improve how quickly our network converges
     normaliser = preprocessing.MinMaxScaler()
     data_normalised = normaliser.fit_transform( data ) # Normalize all columns
+    data_scalers = {}
+    data_scalers['data'] = normaliser
 
     '''
     Using the last {history_points} open close high low volume data points, predict the next value
@@ -100,6 +102,8 @@ def prepare_labels_feat( df ):
 
     label_normaliser = preprocessing.MinMaxScaler()
     label_normaliser.fit( labels_unscaled )
+    data_scalers[meta.label_column] = label_normaliser
+    print( " ------------------ ", data_scalers )
 
     # Normalize technical indictors
     #feat_technical_indicators_normalised = stock_indicators.get_technical_indicators( preprocessing.MinMaxScaler(), feat_ohlcv_histories )
@@ -110,13 +114,15 @@ def prepare_labels_feat( df ):
     dates = np.array( [dates[i+1+history_points].copy() for i in range( len( data ) - history_points )] )
 
     assert feat_ohlcv_histories_normalised.shape[0] == labels_scaled.shape[0] == feat_technical_indicators_normalised.shape[0]
-    return dates, feat_ohlcv_histories_normalised, feat_technical_indicators_normalised, labels_scaled, labels_unscaled, label_normaliser
+    return dates, feat_ohlcv_histories_normalised, feat_technical_indicators_normalised, labels_scaled, labels_unscaled, data_scalers
 
 class Preprocess:
     def __init__( self, test_split=False ):
+        data = get.dataset()
+
         self.dates, self.ohlcv_histories, self.technical_indicators, \
         self.scaled_y, self.unscaled_y, \
-        self.y_normaliser = prepare_labels_feat( get.dataset() )
+        self.data_scalers = prepare_labels_feat( data )
 
         print( "\n\n** Print data shapes: " )
         print( "*********************************" )
@@ -139,8 +145,8 @@ class Preprocess:
     def get_test_data( self ):
         return ( self.ohlcv_histories[self.n_split:], self.technical_indicators[self.n_split:], self.scaled_y[self.n_split:], self.dates[self.n_split:] )
 
-    def get_y_normalizer( self ):
-        return self.y_normaliser
+    def get_normalizers( self ):
+        return self.data_scalers
 
     def get_history_for_date( self, date ):
         print( self.dates )

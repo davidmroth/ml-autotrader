@@ -22,13 +22,13 @@ ohlcv_train, tech_ind_train, y_train, y_train_dates = preprocess.get_training_da
 ohlcv_test, tech_ind_test, y_test, y_test_dates = preprocess.get_test_data()
 # Other
 unscaled_y_test = preprocess.get_unscaled_data()
-y_normaliser = preprocess.get_y_normalizer()
+normaliser = preprocess.get_normalizers()
 
 
 '''
 Run model
 '''
-technical_model = Technical_Model( y_normaliser ).load() # Load model
+technical_model = Technical_Model( normaliser ).load() # Load model
 y_test_predicted = technical_model.predict( [ohlcv_test, tech_ind_test] )
 
 
@@ -36,7 +36,7 @@ y_test_predicted = technical_model.predict( [ohlcv_test, tech_ind_test] )
 Buy / Sell Trade Logic
 '''
 trade_data = ( ohlcv_test, tech_ind_test, y_test_dates, unscaled_y_test )
-predicted_price_yhat, buys, sells = trade_logic.do_trade( technical_model, trade_data, y_normaliser )
+predicted_price_yhat, buys, sells = trade_logic.do_trade( technical_model, trade_data, normaliser )
 
 
 '''
