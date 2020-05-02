@@ -25,32 +25,26 @@ def watch_last( iterable ):
     yield *last, True
 
 def do_trade( model, packed_trade_data, normaliser ):
-    track_metrics = []
-
     # Initialize
-    start = 0
-    end = -1
+    track_metrics = []
     buys = []
     sells = []
     thresh = config.trade_threshold #in dollars?
     predicted_price_yhat = np.array( [None] )
 
     # Trasnform data
-    ohlcv_test, tech_ind_test, y_test_dates, unscaled_y_data = packed_trade_data
+    ohlcv_test, tech_ind_test, y_test_dates, y_test = packed_trade_data
 
     #TODO: Merge date column to np array and then I can do:
-    insight = Insight( unscaled_y_data, y_test_dates )
+    insight = Insight( normaliser[meta.label_column].inverse_transform( y_test ), y_test_dates )
 
     #TODO: Do I need start and end? If 0 ='s the begining the array, and -1
     # ='s the 'end' of array, which whould mean the whole array
-    trade_data = zip( ohlcv_test[start: end], tech_ind_test[start: end], y_test_dates[start: end] )
+    trade_data = zip( ohlcv_test, tech_ind_test, y_test_dates, y_test )
 
-    for ohlcv, ind, date, is_last in watch_last( trade_data ):
-        # Get the last 'close' price in history
-        normalised_price_today = [[ohlcv[-1][meta.column_index[meta.label_column]]]]
-
+    for ohlcv, ind, date, y_test, is_last in watch_last( trade_data ):
         # Get actual price (not normalized)
-        price_today = normaliser[meta.label_column].inverse_transform( normalised_price_today )
+        price_today = normaliser[meta.label_column].inverse_transform( [y_test] )
 
         # Get predicted 'close' price for the next day
         predicted_price_tomorrow = np.squeeze( model.predict( [[ohlcv], [ind]] ) )
@@ -68,7 +62,7 @@ def do_trade( model, packed_trade_data, normaliser ):
         #print( "X %s, ind: %s " % ( x, ind ) )
 
         # For plotting: append predicted prices into an array
-        predicted_price_yhat = np.append( predicted_price_yhat, predicted_price_tomorrow )
+        #predicted_price_yhat = np.append( predicted_price_yhat, predicted_price_tomorrow )
 
         # Print insight
         insight.get_trade_insight( date, price_today, predicted_price_tomorrow, is_last, track_metrics )
@@ -79,4 +73,4 @@ def do_trade( model, packed_trade_data, normaliser ):
         np.sum( track_metrics ),
         np.sum( track_metrics ) / len( track_metrics ) * 100 )
     )
-    return ( predicted_price_yhat, buys, sells )
+    return ( buys, sells )

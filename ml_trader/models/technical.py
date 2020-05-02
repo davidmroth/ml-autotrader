@@ -1,4 +1,5 @@
 import os
+import datetime
 import numpy as np
 
 import ml_trader.utils.file as file
@@ -10,6 +11,7 @@ from ml_trader.models.importance_sampling.training import ImportanceTraining
 
 class Technical_Model:
     model = False
+    y_predicted = False
 
     def __init__( self, data_scalers ):
         self.model_name = 'my_model'
@@ -105,19 +107,47 @@ class Technical_Model:
     def score( self, x, y ):
         return self.model.evaluate( x, y )
 
-    def mean_squaured_error( self, y_test, y_predicted ):
+    def mean_squaured_error( self, y_test, y_hat_test ):
         '''
-        Mean Squared Error Definition
+        What does the Mean Squared Error Tell You?
 
-        The mean squared error tells you how close a regression line is to a set of
-        points. It does this by taking the distances from the points to the regression
-        line (these distances are the “errors”) and squaring them. The squaring is
-        necessary to remove any negative signs. It also gives more weight to larger
-        differences. It’s called the mean squared error as you’re finding the average
-        of a set of errors.
+        Mean Absolute Error (MAE) is one of the most common metrics used to measure
+        accuracy for continuous variables
+
+        MAE measures the average magnitude of the errors in a set of predictions,
+        without considering their direction.
+
+        The smaller the means squared error, the closer you are to finding the line of
+        best fit. Depending on your data, it may be impossible to get a very small
+        value for the mean squared error. For example, the above data is scattered
+        wildly around the regression line, so 6.08 is as good as it gets (and is in
+        fact, the line of best fit).
         '''
-        real_mse = np.mean( np.square( y_test - y_predicted ) )
-        return real_mse / ( np.max( y_test ) - np.min( y_test ) ) * 100
+        unscaled_y_test = self.data_scalers[meta.label_column].inverse_transform( y_test )
+        real_mse = np.mean( np.square( unscaled_y_test - y_hat_test ) )
+        return real_mse / ( np.max( unscaled_y_test ) - np.min( unscaled_y_test ) ) * 100
+
+    def root_mean_squared_error( self, y_test, y_hat_test ):
+        '''
+        What does the Root Mean Squared Error Tell You?
+
+        Root mean squared error (RMSE) is a quadratic scoring rule that also
+        measures the average magnitude of the error.
+
+        Taking the square root of the average squared errors has some interesting
+        implications for RMSE. Since the errors are squared before they are
+        averaged, the RMSE gives a relatively high weight to large errors.
+        This means the RMSE should be more useful when large errors are
+        particularly undesirable.
+
+        Conclusion
+        RMSE has the benefit of penalizing large errors more, so it can be more
+        appropriate in some cases, for example, if being off by 10 is more than
+        twice as bad as being off by 5. But if being off by 10 is just twice as
+        bad as being off by 5, then MAE is more appropriate.
+        '''
+        unscaled_y_test = self.data_scalers[meta.label_column].inverse_transform( y_test )
+        return np.sqrt( ( ( y_hat_test - unscaled_y_test ) ** 2 ).mean() )
 
     def load( self ):
         if not file.exists( config.model_filepath ):
@@ -167,19 +197,20 @@ class Technical_Model:
         fname = os.path.basename( config.model_filepath )
 
         checkpointer = ModelCheckpoint( os.path.join( dir, fname ), save_best_only=True, verbose=1 )
-        tensorboard = TensorBoard( log_dir=os.path.join( "/tmp", self.model_name ) )
+        log_dir = "/tmp/tensorboard/" + datetime.datetime.now().strftime( "%Y%m%d-%H%M%S" )
+        tensorboard = TensorBoard( log_dir=os.path.join( log_dir, self.model_name ) )
 
         return self.model.fit( x=x, y=y, \
             batch_size=config.batch_size, epochs=config.epochs, \
             shuffle=config.shuffle, validation_split=0.1, \
-            #callbacks=[EarlyStopping( monitor='val_loss', patience=10 ), tensorboard, checkpointer], \
-            callbacks=[tensorboard, checkpointer], \
+            callbacks=[EarlyStopping( monitor='val_loss', patience=config.patience ), tensorboard, checkpointer], \
+            #callbacks=[tensorboard, checkpointer], \
             validation_data=(x_test, y_test), \
             verbose=1 )
 
     def predict( self, y ):
-        y_predicted = self.model.predict( y )
-        return self.data_scalers[meta.label_column].inverse_transform( y_predicted )
+        y_hat = self.model.predict( y )
+        return self.data_scalers[meta.label_column].inverse_transform( y_hat )
 
     def predict_raw( self, y ):
         return self.model.predict( y )

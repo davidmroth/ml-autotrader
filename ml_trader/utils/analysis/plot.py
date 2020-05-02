@@ -1,3 +1,4 @@
+import time
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,6 +7,7 @@ import matplotlib.dates as mdates
 import ml_trader.utils as utils
 import ml_trader.config as config
 import ml_trader.utils.file as file
+import ml_trader.utils.data.meta as meta
 
 
 years = mdates.YearLocator()   # every year
@@ -17,13 +19,13 @@ def format_price( p ):
     return np.set_printoptions( formatter={'float': lambda x: "{0:0.2f}".format( price_today[0][0] )} )
 
 class Plot:
-    def __init__( self, name, start, end, legend=None, xlabel=None, ylabel=None  ):
+    def __init__( self, name, legend=None, xlabel=None, ylabel=None, scalers=False  ):
+        if scalers:
+            self.y_scaler = scalers[meta.label_column]
         self.xlabel = xlabel
         self.ylabel = ylabel
         self.name = name
         self.legend = legend
-        self.start = start
-        self.end = end
 
     def _unpack_buy_sells( self, value, index ):
         return list( list( zip( *value ) )[index] )
@@ -44,15 +46,17 @@ class Plot:
     def title( self, title ):
         plt.title( title )
 
-    def graph( self, y_axis, x_axis=None, label=None ):
+    def graph( self, y_axis, x_axis=None, label=None, scale=False ):
+        if scale:
+            y_axis = self.y_scaler.inverse_transform( y_axis )
+
         if ( x_axis is None ):
-            plt.plot( y_axis[self.start:self.end], label=label )
+            plt.plot( y_axis, label=label )
         else:
-            x_axis = x_axis[self.start:self.end]
             x_axis = np.array( [datetime.datetime.fromtimestamp( i ) for i in x_axis] )
 
             ax = plt.gca()
-            plt.plot( x_axis, y_axis[self.start:self.end], label=label )
+            plt.plot( x_axis, y_axis, label=label )
 
             xmin, xmax = ax.get_xlim()
             custom_ticks = np.linspace( xmin, xmax, 10, dtype=int )
@@ -69,7 +73,7 @@ class Plot:
         plt.scatter( x, y, c=c, s=s )
 
     def create( self ):
-        file_path = file.timestamp( config.train_analysis.format( self.name ) )
+        file_path = file.timestamp( config.train_analysis.format( self.name + '_' + time.strftime( "%H_%M_%S" )) )
         file.create_path_if_needed( file_path )
 
         plt.gcf().set_size_inches( 22, 15, forward=True )

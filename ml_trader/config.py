@@ -17,9 +17,9 @@ File paths
 data_filepath = 'data/stock/%s_%s.csv'
 metadata_filepath = 'data/stock/meta_data.json'
 model_filepath = 'data/models/technical_model.h5'
-model_visualization_filepath = 'data/analysis/model_visualization_%s.png'
-prediction_analysis = 'data/analysis/{}_out_%s.png'
-train_analysis = 'data/analysis/{}_out_%s.png'
+model_visualization_filepath = 'data/analysis/model_visualization/%s.png'
+prediction_analysis = 'data/analysis/pridictions/%s/{}.png'
+train_analysis = 'data/analysis/training/%s/{}.png'
 
 
 '''
@@ -37,8 +37,10 @@ Model hyperparamters
 # if history_points is set to 50, the model will train on and require the
 # past 50 days of stock history to make a prediction about just the next day.
 
+look_ahead = 0
 history_points = 50 # Size of LSTM input / Can't be less than 13
 #technical_indictors_input_size = 10 # Size of technical indictors input / set automatically
 shuffle = True
 batch_size = 32
-epochs = 100 # Number of training runs ( typlically, the more the better )
+epochs = 2 # Number of training runs ( typlically, the more the better )
+patience = 100

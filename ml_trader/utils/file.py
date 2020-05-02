@@ -3,7 +3,7 @@ import time
 
 
 def timestamp( filename ):
-    datetime_str = time.strftime( "%m_%d_%Y-%H_%M_%S" )
+    datetime_str = time.strftime( "%Y_%m_%d" )
     return filename % datetime_str
 
 def get_path( filename ):

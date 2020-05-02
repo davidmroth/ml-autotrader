@@ -30,8 +30,9 @@ def prepare_labels_feat( df ):
     '''
     Transform data
     '''
+    data_scalers = {}
     dm = utils.DateManager()
-    history_points = config.history_points
+    history_points = config.history_points + 1
 
     #
     # Feature engineering
@@ -52,35 +53,50 @@ def prepare_labels_feat( df ):
     df.sort_values( 'date', inplace=True, ascending=True )
 
     # Get next row's open value, and add it to current row as a new column
-    df['open_change'] = df['open'].shift( -1 )
+    df['next_day_change'] = df['open'].shift( -1 )
 
-    # Change 'open_change' column to represent if the next day was: higher(1), lower(-1), or no change (0)
-    df['open_change'] = np.where( df['open_change'] < df['open'], -1, df['open_change'] ).astype( int )
-    df['open_change'] = np.where( df['open_change'] > df['open'], 1, df['open_change'] ).astype( int )
-    df['open_change'] = np.where( df['open_change'] == df['open'], 0, df['open_change'] ).astype( int )
+    # Change 'next_day_change' column to represent if the next day was: higher(1), lower(-1), or no change (0)
+    df['next_day_change'] = np.where( df['next_day_change'] < df['open'], -1, df['next_day_change'] ).astype( int )
+    df['next_day_change'] = np.where( df['next_day_change'] > df['open'], 1, df['next_day_change'] ).astype( int )
+    df['next_day_change'] = np.where( df['next_day_change'] == df['open'], 0, df['next_day_change'] ).astype( int )
 
     df['date'] = pd.to_datetime( df['date'] ) # Convert to datetime
     df['weekday_num'] = df['date'].apply( lambda x: x.weekday() ) # Get weekday_num as a feature
+
     df['date'] = df['date'].apply( dm.convert_to_timestamp ) # Convert to unix timestamp which can be normalized
 
-    # Copy values to seperate numpy array
-    dates = df['date'].values
-    open_change = df['open_change'].values
-
-    # remove columns from data frame
-    df = df.drop( 'date', axis=1 )
-    df = df.drop( 'open_change', axis=1 )
+    #Label to predict
+    df['label'] = df[meta.label_column].shift( -config.look_ahead )
 
     # The first day of trading that stock often looked anomalous due to the massively high volume (IPO).
     # This inflated max volume value also affected how other volume values in the dataset were scaled when normalising the data,
     # so we drop the oldest data point out of every set)
-    data = df.iloc[1:].values # Convert to numpy array
+    df = df.iloc[1:]
+
+    # Lob off last x rows since we can't add future stock dates to the last x rows
+    if ( config.look_ahead > 0 ):
+        df = df.iloc[:-config.look_ahead]
+    else:
+        df = df.iloc[:-1]
+
+    # Copy values to seperate numpy array
+    labels = df['label'].values
+    dates = df['date'].values
+    next_day_change = df['next_day_change'].values
+
+    # remove columns from data frame
+    df = df.drop( 'date', axis=1 )
+    df = df.drop( 'next_day_change', axis=1 )
+    df = df.drop( 'label', axis=1 )
+
+    data = df.values # Convert to numpy array
+
 
     # Normalise the data — scale it between 0 and 1 — to improve how quickly our network converges
     normaliser = preprocessing.MinMaxScaler()
     data_normalised = normaliser.fit_transform( data ) # Normalize all columns
-    data_scalers = {}
     data_scalers['data'] = normaliser
+    num_data_points = len( data ) - history_points
 
     '''
     Using the last {history_points} open close high low volume data points, predict the next value
@@ -90,39 +106,35 @@ def prepare_labels_feat( df ):
     '''
     #TODO: Figure out why 'i+1:i + history_points+1' works, but not i:i + history_points
     #feat_ohlcv_histories_normalised = np.array( [data_normalised[i:i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
-    feat_ohlcv_histories_normalised = np.array( [data_normalised[i+1:i + history_points+1].copy() for i in range( len( data_normalised ) - history_points )] )
-    feat_ohlcv_histories = np.array( [data[i:i + history_points].copy() for i in range( len( data ) - history_points )] )
+    feat_ohlcv_histories_normalised = np.array( [data_normalised[i+1:i + history_points].copy() for i in range( num_data_points )] )
+    feat_ohlcv_histories = np.array( [data[i:i + history_points].copy() for i in range( num_data_points )] )
+
+    # Label data
+    label_normalizer = preprocessing.MinMaxScaler()
+    labels_normalised = label_normalizer.fit_transform( np.expand_dims( labels, -1 ) ) # Normalize all columns
+    data_scalers[meta.label_column] = label_normalizer
 
     # Get normalized 'close' values, so model can be trained to predict this item
-    labels_scaled = np.array( [data_normalised[:, meta.column_index[meta.label_column]][i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
-    labels_scaled = np.expand_dims( labels_scaled, -1 ) #NICE: each item added to its own array and this is super fast
-
-    labels_unscaled = np.array( [data[:, meta.column_index[meta.label_column]][i + history_points].copy() for i in range( len( data ) - history_points )] )
-    labels_unscaled = np.expand_dims( labels_unscaled, -1 ) #NICE: each item added to its own array and this is super fast
-
-    label_normaliser = preprocessing.MinMaxScaler()
-    label_normaliser.fit( labels_unscaled )
-    data_scalers[meta.label_column] = label_normaliser
-    print( " ------------------ ", data_scalers )
+    labels_scaled = np.array( [labels_normalised[i + history_points].copy() for i in range( num_data_points )] )
+    #labels_scaled = np.expand_dims( labels_scaled, -1 ) #NICE: each item added to its own array and this is super fast
 
     # Normalize technical indictors
-    #feat_technical_indicators_normalised = stock_indicators.get_technical_indicators( preprocessing.MinMaxScaler(), feat_ohlcv_histories )
-    feat_technical_indicators_normalised = stock_indicators.get_technical_indicators_talib( preprocessing.MinMaxScaler(), df, len( data ) - history_points )
     #feat_technical_indicators_normalised = stock_indicators.get_technical_indicators( data )
+    #feat_technical_indicators_normalised = stock_indicators.get_technical_indicators( preprocessing.MinMaxScaler(), feat_ohlcv_histories )
+    feat_technical_indicators_normalised = stock_indicators.get_technical_indicators_talib( preprocessing.MinMaxScaler(), df, num_data_points )
 
     # Get dates in a single column
-    dates = np.array( [dates[i+1+history_points].copy() for i in range( len( data ) - history_points )] )
+    dates = np.array( [dates[i + history_points].copy() for i in range( num_data_points )] )
 
     assert feat_ohlcv_histories_normalised.shape[0] == labels_scaled.shape[0] == feat_technical_indicators_normalised.shape[0]
-    return dates, feat_ohlcv_histories_normalised, feat_technical_indicators_normalised, labels_scaled, labels_unscaled, data_scalers
+    return dates, feat_ohlcv_histories_normalised, feat_technical_indicators_normalised, labels_scaled, data_scalers
 
 class Preprocess:
     def __init__( self, test_split=False ):
         data = get.dataset()
 
         self.dates, self.ohlcv_histories, self.technical_indicators, \
-        self.scaled_y, self.unscaled_y, \
-        self.data_scalers = prepare_labels_feat( data )
+        self.scaled_y, self.data_scalers = prepare_labels_feat( data )
 
         print( "\n\n** Print data shapes: " )
         print( "*********************************" )
@@ -130,14 +142,13 @@ class Preprocess:
         print( "ohlcv_histories:", len( self.ohlcv_histories ) )
         print( "technical_indicators:", len( self.technical_indicators ) )
         print( "scaled_y:", len( self.scaled_y ) )
-        print( "unscaled_y:", len( self.unscaled_y ) )
         print( "*********************************\n\n" )
 
         if test_split:
             self.n_split = int( self.ohlcv_histories.shape[0] * test_split )
 
     def get_unscaled_data( self ):
-        return ( self.unscaled_y[self.n_split:] )
+        return ( self.data_scalers[meta.label_column].inverse_transform( self.scaled_y[self.n_split:] ) )
 
     def get_training_data( self ):
         return ( self.ohlcv_histories[:self.n_split], self.technical_indicators[:self.n_split], self.scaled_y[:self.n_split], self.dates[:self.n_split] )
@@ -145,11 +156,10 @@ class Preprocess:
     def get_test_data( self ):
         return ( self.ohlcv_histories[self.n_split:], self.technical_indicators[self.n_split:], self.scaled_y[self.n_split:], self.dates[self.n_split:] )
 
-    def get_normalizers( self ):
+    def get_scalers( self ):
         return self.data_scalers
 
     def get_history_for_date( self, date ):
-        print( self.dates )
         dates = np.array( [datetime.datetime.fromtimestamp( i ) for i in self.dates] )
         date_min = dates.min()
         date_max = dates.max()

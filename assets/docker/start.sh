@@ -1,7 +1,8 @@
 #!/bin/bash
 
-if test $# -gt 1; then
-	docker run -it -p 8080:8080 -v $(pwd):/app/ python:stock-ml python /app/basic_model.py
+
+if test $# -gt 0; then
+	docker run -it -p 8080:8080 -v $(pwd):/app/ python:stock-ml $@
 else
-	docker run -it -p 8080:8080 -v $(pwd):/app/ python:stock-ml $@ 
+	docker run -it -p 8080:8080 -v $(pwd):/app/ python:stock-ml python train.py
 fi
