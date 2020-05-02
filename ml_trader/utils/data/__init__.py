@@ -32,13 +32,11 @@ def prepare_labels_feat( df ):
     '''
     data_scalers = {}
     dm = utils.DateManager()
-    history_points = config.history_points + 1
+    history_points = config.history_points
 
     #
     # Feature engineering
     #
-
-    df = df.sort_values( ['date'] ).reset_index( drop=True )
 
     # Modify column header names
     new_column_names = df.columns.values
@@ -49,8 +47,8 @@ def prepare_labels_feat( df ):
     new_column_names[5] = 'volume'
     df.columns = new_column_names
 
-    # Sort dataframe ascending
-    df.sort_values( 'date', inplace=True, ascending=True )
+    # Sort dataframe ascending & reset index
+    df = df.sort_values( ['date'], ascending=True ).reset_index( drop=True )
 
     # Get next row's open value, and add it to current row as a new column
     df['next_day_change'] = df['open'].shift( -1 )
@@ -73,11 +71,10 @@ def prepare_labels_feat( df ):
     # so we drop the oldest data point out of every set)
     df = df.iloc[1:]
 
+    #TODO: Check if correct
     # Lob off last x rows since we can't add future stock dates to the last x rows
     if ( config.look_ahead > 0 ):
         df = df.iloc[:-config.look_ahead]
-    else:
-        df = df.iloc[:-1]
 
     # Copy values to seperate numpy array
     labels = df['label'].values
@@ -86,16 +83,24 @@ def prepare_labels_feat( df ):
 
     # remove columns from data frame
     df = df.drop( 'date', axis=1 )
-    df = df.drop( 'next_day_change', axis=1 )
     df = df.drop( 'label', axis=1 )
+    df = df.drop( 'next_day_change', axis=1 )
+    df = df.drop( 'weekday_num', axis=1 )
 
+    df = df.reset_index()
+    df = df.drop( 'index', axis=1 )
+    #print( df )
     data = df.values # Convert to numpy array
+    #print( data )
 
-
-    # Normalise the data — scale it between 0 and 1 — to improve how quickly our network converges
+    # Normalise the data — scale it between 0 and 1 — to improve how quickly
+    # our network converges
     normaliser = preprocessing.MinMaxScaler()
     data_normalised = normaliser.fit_transform( data ) # Normalize all columns
     data_scalers['data'] = normaliser
+    #print( data_normalised )
+
+    # Num of data points
     num_data_points = len( data ) - history_points
 
     '''
@@ -106,28 +111,33 @@ def prepare_labels_feat( df ):
     '''
     #TODO: Figure out why 'i+1:i + history_points+1' works, but not i:i + history_points
     #feat_ohlcv_histories_normalised = np.array( [data_normalised[i:i + history_points].copy() for i in range( len( data_normalised ) - history_points )] )
-    feat_ohlcv_histories_normalised = np.array( [data_normalised[i+1:i + history_points].copy() for i in range( num_data_points )] )
-    feat_ohlcv_histories = np.array( [data[i:i + history_points].copy() for i in range( num_data_points )] )
+    #feat_ohlcv_histories_normalised = np.array( [data_normalised[i+1:i + history_points].copy() for i in range( num_data_points )] )
+    feat_ohlcv_histories_normalized = np.array( [data_normalised[i:i + history_points].copy() for i in range( num_data_points )] )
+    #print( feat_ohlcv_histories_normalised )
 
     # Label data
     label_normalizer = preprocessing.MinMaxScaler()
-    labels_normalised = label_normalizer.fit_transform( np.expand_dims( labels, -1 ) ) # Normalize all columns
+    #NICE: (np.expand_dims) each item added to its own array and this is super fast
+    labels_scaled = label_normalizer.fit_transform( np.expand_dims( labels[history_points:,], -1 ) )
     data_scalers[meta.label_column] = label_normalizer
+    #print( np.expand_dims( labels[history_points:,], -1 ) )
+    #print( labels_scaled )
+    #print( label_normalizer.inverse_transform( labels_scaled ) )
 
-    # Get normalized 'close' values, so model can be trained to predict this item
-    labels_scaled = np.array( [labels_normalised[i + history_points].copy() for i in range( num_data_points )] )
-    #labels_scaled = np.expand_dims( labels_scaled, -1 ) #NICE: each item added to its own array and this is super fast
+    # Get all labels minus last x days ( minus history_points )
+    #labels_scaled = np.array( [labels_normalized[i + history_points].copy() for i in range( num_data_points )] )
 
-    # Normalize technical indictors
-    #feat_technical_indicators_normalised = stock_indicators.get_technical_indicators( data )
-    #feat_technical_indicators_normalised = stock_indicators.get_technical_indicators( preprocessing.MinMaxScaler(), feat_ohlcv_histories )
-    feat_technical_indicators_normalised = stock_indicators.get_technical_indicators_talib( preprocessing.MinMaxScaler(), df, num_data_points )
-
-    # Get dates in a single column
+    # Get all dates minus last x days ( minus history_points )
     dates = np.array( [dates[i + history_points].copy() for i in range( num_data_points )] )
 
-    assert feat_ohlcv_histories_normalised.shape[0] == labels_scaled.shape[0] == feat_technical_indicators_normalised.shape[0]
-    return dates, feat_ohlcv_histories_normalised, feat_technical_indicators_normalised, labels_scaled, data_scalers
+    # Get normalize technical indictors
+    data_scalers['tech_ind'], feat_technical_indicators_normalized = stock_indicators.get_technical_indicators_talib( preprocessing.MinMaxScaler(), df, num_data_points )
+
+    print( feat_ohlcv_histories_normalized.shape[0], labels_scaled.shape[0], feat_technical_indicators_normalized.shape[0] )
+    assert feat_ohlcv_histories_normalized.shape[0] == labels_scaled.shape[0] == feat_technical_indicators_normalized.shape[0]
+    #print( '\n\nDates:', dates, '\n\nfeat_ohlcv_histories_normalised', feat_ohlcv_histories_normalised, '\n\nfeat_technical_indicators_normalised', feat_technical_indicators_normalised, '\n\nlabels_scaled', labels_scaled )
+
+    return dates, feat_ohlcv_histories_normalized, feat_technical_indicators_normalized, labels_scaled, data_scalers
 
 class Preprocess:
     def __init__( self, test_split=False ):
@@ -155,6 +165,9 @@ class Preprocess:
 
     def get_test_data( self ):
         return ( self.ohlcv_histories[self.n_split:], self.technical_indicators[self.n_split:], self.scaled_y[self.n_split:], self.dates[self.n_split:] )
+
+    def get_all_data( self ):
+        return ( self.ohlcv_histories, self.technical_indicators, self.scaled_y, self.dates )
 
     def get_scalers( self ):
         return self.data_scalers

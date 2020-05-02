@@ -25,44 +25,52 @@ ohlcv_train, tech_ind_train, y_train, y_train_dates = preprocess.get_training_da
 ohlcv_test, tech_ind_test, y_test, y_test_dates = preprocess.get_test_data()
 
 # Other
-normaliser = preprocess.get_scalers()
+scalers = preprocess.get_scalers()
 
 
 '''
 Run model
 '''
-technical_model = Technical_Model( normaliser ).load() # Load model
-y_test_predicted = technical_model.predict( [ohlcv_test, tech_ind_test] )
+technical_model = Technical_Model( scalers ).load() # Load model
 
+'''
+Evaluate model
+'''
+y_test_predicted = technical_model.predict( [ohlcv_test, tech_ind_test] )
+loss, acc, mae = technical_model.score( [ohlcv_test, tech_ind_test], y_test_predicted )
 
 '''
 Buy / Sell Trade Logic
 '''
 trade_data = ( ohlcv_test, tech_ind_test, y_test_dates, y_test )
-buys, sells = trade_logic.do_trade( technical_model, trade_data, normaliser )
-
+buys, sells = trade_logic.do_trade( technical_model, trade_data, scalers )
 
 '''
-Analysis & Scoring
+Trade Analysis
 '''
+print( 'Num of predictions ran: %d' % ( y_test_predicted.shape[0], ) )
 print( "Buys: %d" % len( buys ) )
 print( "Sells: %d" % len( sells ) )
-
-# We create new lists so we dont modify the original
 compute.earnings( buys, sells )
 
-# TODO: Move to model scoring
+'''
+Score model
+'''
 mse = technical_model.mean_squaured_error( y_test, y_test_predicted )
-print( "Mean Squared Error (MSE): %.2f" % mse )
-print( 'Num of predictions ran: %d' % ( y_test_predicted.shape[0], ) )
+rmse = technical_model.root_mean_squared_error( y_test, y_test_predicted )
+print( "\n\nEvalutation: \n \
+    \tLoss: %.4f\n \
+    \tAccuracy: %.4f\n \
+    \tMean Absolute Error: %.2f\n \
+    \tMean Squared Error: %.2f\n \
+    \tRoot Mean Squared Error %.2f" % ( loss, acc, mae, mse, rmse ) )
 
 
 '''
 Plot
 '''
-unscaled_y_test = normaliser[meta.label_column].inverse_transform( y_test )
-plt = Plot( 'Simulation', start=0, end=-1, legend=['Real', 'Predicted', 'Buy', 'Sell'] )
-plt.graph( x_axis=y_test_dates, y_axis=unscaled_y_test, label='Real' )
+plt = Plot( 'Simulation', legend=['Real', 'Predicted', 'Buy', 'Sell'], scalers=scalers )
+plt.graph( x_axis=y_test_dates, y_axis=y_test, label='Real' )
 plt.graph( x_axis=y_test_dates, y_axis=y_test_predicted, label='Predicted' )
 plt.add_note(
     (

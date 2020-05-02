@@ -42,5 +42,5 @@ history_points = 50 # Size of LSTM input / Can't be less than 13
 #technical_indictors_input_size = 10 # Size of technical indictors input / set automatically
 shuffle = True
 batch_size = 32
-epochs = 2 # Number of training runs ( typlically, the more the better )
+epochs = 300 # Number of training runs ( typlically, the more the better )
 patience = 100

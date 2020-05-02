@@ -73,20 +73,28 @@ class Technical_Model:
         print( model.summary() )
         print( "******************************************************\n\n" )
 
+        print(
+            '\n\nModel expects: ( %s, %s, %s )\nFeats configured: ( %s, %s, %s )\n'
+            % (
+                model.layers[1].output_shape[2],
+                model.layers[1].output_shape[1],
+                model.layers[0].output_shape[1],
+                self.data_column_size,
+                config.history_points,
+                config.technical_indictors_input_size
+            )
+        )
+
         if \
             model.layers[0].output_shape[1] != config.technical_indictors_input_size or \
             model.layers[1].output_shape[1] != config.history_points or \
             model.layers[1].output_shape[2] != self.data_column_size:
-            print(
-                '\n\nModel expects: ( %s, %s )\nData configured: ( %s, %s )\n'
-                % ( model.layers[1].output_shape[1],
-                model.layers[1].output_shape[2],
-                config.history_points,
-                self.data_column_size )
-            )
             print( "*** Please retrain this model. Dataset or config is out of sync with the saved model!\n\n" )
 
             raise Exception( "\n\n!!! Model needs to be retrained!!!\n\n" )
+
+        # Save a visualization of the current model
+        self._save_model_visualization( self.model )
         return self
 
     def _save_model_visualization( self, model ):
@@ -98,11 +106,6 @@ class Technical_Model:
 
     def get_model( self ):
         return self.model
-
-    def save( self ):
-        #file.create_path_if_needed( config.model_filepath )
-        #self.model.save( config.model_filepath )
-        self._save_model_visualization( self.model )
 
     def score( self, x, y ):
         return self.model.evaluate( x, y )

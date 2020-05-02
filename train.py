@@ -6,10 +6,11 @@ import matplotlib.pyplot as plt
 import ml_trader.config as config
 import ml_trader.utils.data.meta as meta
 
+from tensorboard import program
 from ml_trader.models.technical import Technical_Model
 from ml_trader.utils.analysis.plot import Plot
 from ml_trader.utils.data import Preprocess
-from tensorboard import program
+
 
 np.random.seed( 4 )
 tf.random.set_seed( 4 )
@@ -27,13 +28,19 @@ if __name__ == '__main__':
     '''
     # Setup
     preprocess = Preprocess( 0.9 )
+
     # Training data
     ohlcv_train, tech_ind_train, y_train, y_train_dates = preprocess.get_training_data()
+
     # Test data
     ohlcv_test, tech_ind_test, y_test, y_test_dates = preprocess.get_test_data()
 
     # Get data normalizer
     scalers = preprocess.get_scalers()
+
+    print( ohlcv_train.shape )
+    print( ohlcv_test.shape )
+
 
     '''
     Train model
@@ -42,17 +49,15 @@ if __name__ == '__main__':
     technical_model.build() # Build model
     evalutation = technical_model.train( [ohlcv_train, tech_ind_train], y_train, [ohlcv_test, tech_ind_test], y_test ) # Train model
     #evalutation = technical_model.optimized_training( [ohlcv_train, tech_ind_train], y_train, [ohlcv_test, tech_ind_test], y_test ) # Train model
-    technical_model.save() # Save trained model for later use
-
-    #TODO: Put accuracy on a seperate scale shared by the same X axis
-    #acc, loss = technical_model.score( [ohlcv_test, tech_ind_test], y_test )
-    loss, acc, mae = technical_model.score( [ohlcv_test, tech_ind_test], y_test )
 
     '''
     Evaluate model
     '''
     y_train_predicted = technical_model.predict( [ohlcv_train, tech_ind_train] )
     y_test_predicted = technical_model.predict( [ohlcv_test, tech_ind_test] )
+
+    #TODO: Put accuracy on a seperate scale shared by the same X axis
+    loss, acc, mae = technical_model.score( [ohlcv_test, tech_ind_test], y_test_predicted )
 
     # Check
     assert y_test.shape == y_test_predicted.shape
