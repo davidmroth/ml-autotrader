@@ -9,12 +9,12 @@ import pandas as pd
 import numpy as np
 import datetime
 
-import ml_trader.config as config
 import ml_trader.utils as utils
 import ml_trader.utils.file as file
-import ml_trader.utils.data.meta as meta
 import ml_trader.utils.stock.indicators as stock_indicators
 import ml_trader.utils.data.imports.get as get
+
+from ml_trader.config import Config as config
 
 from pprint import pprint
 from sklearn import preprocessing
@@ -64,7 +64,7 @@ def prepare_labels_feat( df ):
     df['date'] = df['date'].apply( dm.convert_to_timestamp ) # Convert to unix timestamp which can be normalized
 
     #Label to predict
-    df['label'] = df[meta.label_column].shift( -config.look_ahead )
+    df['label'] = df[config.label_column].shift( -config.look_ahead )
 
     # The first day of trading that stock often looked anomalous due to the massively high volume (IPO).
     # This inflated max volume value also affected how other volume values in the dataset were scaled when normalising the data,
@@ -85,11 +85,14 @@ def prepare_labels_feat( df ):
     df = df.drop( 'date', axis=1 )
     df = df.drop( 'label', axis=1 )
     df = df.drop( 'next_day_change', axis=1 )
-    df = df.drop( 'weekday_num', axis=1 )
+    #df = df.drop( 'weekday_num', axis=1 )
 
     df = df.reset_index()
     df = df.drop( 'index', axis=1 )
+
     #print( df )
+    config.set( 'column_index', { key: value for (key,value) in zip( range(0, len( df.columns.values ) ), df.columns.values) } )
+
     data = df.values # Convert to numpy array
     #print( data )
 
@@ -119,7 +122,7 @@ def prepare_labels_feat( df ):
     label_normalizer = preprocessing.MinMaxScaler()
     #NICE: (np.expand_dims) each item added to its own array and this is super fast
     labels_scaled = label_normalizer.fit_transform( np.expand_dims( labels[history_points:,], -1 ) )
-    data_scalers[meta.label_column] = label_normalizer
+    data_scalers[config.label_column] = label_normalizer
     #print( np.expand_dims( labels[history_points:,], -1 ) )
     #print( labels_scaled )
     #print( label_normalizer.inverse_transform( labels_scaled ) )
@@ -158,7 +161,7 @@ class Preprocess:
             self.n_split = int( self.ohlcv_histories.shape[0] * test_split )
 
     def get_unscaled_data( self ):
-        return ( self.data_scalers[meta.label_column].inverse_transform( self.scaled_y[self.n_split:] ) )
+        return ( self.data_scalers[config.label_column].inverse_transform( self.scaled_y[self.n_split:] ) )
 
     def get_training_data( self ):
         return ( self.ohlcv_histories[:self.n_split], self.technical_indicators[:self.n_split], self.scaled_y[:self.n_split], self.dates[:self.n_split] )

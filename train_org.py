@@ -9,14 +9,16 @@ import numpy as np
 from tensorboard import program
 import datetime
 
-import ml_trader.config as config
 import ml_trader.utils.file as file
+
+from ml_trader.config import Config as config
 from ml_trader.utils.data import Preprocess
-import ml_trader.utils.data.meta as meta
 from ml_trader.utils.orig import csv_to_dataset
+
 
 np.random.seed( 4 )
 tf.random.set_seed( 4 )
+
 
 if __name__ == '__main__':
     # Start tensorboard
@@ -43,7 +45,7 @@ if __name__ == '__main__':
     # Get data normalizer
     scalers = preprocess.get_scalers()
 
-    y_normaliser = scalers[meta.label_column]
+    y_normaliser = scalers[config.label_column]
     unscaled_y = y_normaliser.inverse_transform( unscaled_y )
 
     print(

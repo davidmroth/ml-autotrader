@@ -1,4 +1,4 @@
-import ml_trader.config as config
+from ml_trader.config import Config as config
 
 
 def earnings( buys, sells ):

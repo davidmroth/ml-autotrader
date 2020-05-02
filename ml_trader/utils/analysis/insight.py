@@ -1,7 +1,7 @@
 import numpy as np
 
 import ml_trader.utils as utils
-import ml_trader.utils.data.meta as meta
+from ml_trader.config import Config as config
 
 
 class Insight:
@@ -79,11 +79,11 @@ class Insight:
                 [{}]
                 '''.format(
                     today,
-                    meta.label_column,
+                    config.label_column,
                     next_business_day,
                     predicted_price_tomorrow,
                     price_change_summary,
-                    meta.label_column,
+                    config.label_column,
                     price_today,
                     actual
                 )

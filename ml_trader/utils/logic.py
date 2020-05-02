@@ -1,8 +1,7 @@
 import datetime
 import numpy as np
 
-import ml_trader.config as config
-import ml_trader.utils.data.meta as meta
+from ml_trader.config import Config as config
 from ml_trader.utils.analysis.insight import Insight
 
 
@@ -36,7 +35,7 @@ def do_trade( model, packed_trade_data, normaliser ):
     ohlcv_test, tech_ind_test, y_test_dates, y_test = packed_trade_data
 
     #TODO: Merge date column to np array and then I can do:
-    insight = Insight( normaliser[meta.label_column].inverse_transform( y_test ), y_test_dates )
+    insight = Insight( normaliser[config.label_column].inverse_transform( y_test ), y_test_dates )
 
     #TODO: Do I need start and end? If 0 ='s the begining the array, and -1
     # ='s the 'end' of array, which whould mean the whole array
@@ -44,7 +43,7 @@ def do_trade( model, packed_trade_data, normaliser ):
 
     for ohlcv, ind, date, y_test, is_last in watch_last( trade_data ):
         # Get actual price (not normalized)
-        price_today = normaliser[meta.label_column].inverse_transform( [y_test] )
+        price_today = normaliser[config.label_column].inverse_transform( [y_test] )
 
         # Get predicted 'close' price for the next day
         predicted_price_tomorrow = np.squeeze( model.predict( [[ohlcv], [ind]] ) )

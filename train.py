@@ -3,10 +3,10 @@ import time
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
-import ml_trader.config as config
-import ml_trader.utils.data.meta as meta
 
 from tensorboard import program
+
+from ml_trader.config import Config as config
 from ml_trader.models.technical import Technical_Model
 from ml_trader.utils.analysis.plot import Plot
 from ml_trader.utils.data import Preprocess

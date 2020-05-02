@@ -4,8 +4,7 @@ import datetime
 import numpy as np
 
 import ml_trader.utils as utils
-import ml_trader.utils.data.meta as meta
-import ml_trader.config as config
+from ml_trader.config import Config as config
 import ml_trader.utils.analysis.insight as insight
 
 from ml_trader.models.technical import Technical_Model
@@ -33,7 +32,7 @@ def predict( date ):
 
     #BUG: Last column is not the current day's metrics.
     #TODO: Need to figure out how to get the current day's metrics(?)
-    price_today = y_normaliser.inverse_transform( np.array( [[ohlcv[-1][meta.column_index[meta.label_column]]]] ) )
+    price_today = y_normaliser.inverse_transform( np.array( [[ohlcv[-1][config.column_index[config.label_column]]]] ) )
     insight.get_trade_insight( y_date, price_today, y_price_predicted )
 
 def check_valid_date( s ):

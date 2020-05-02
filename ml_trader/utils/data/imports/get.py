@@ -4,7 +4,7 @@ import datetime
 import pandas as pd
 
 import ml_trader.utils.file as file
-import ml_trader.config as config
+from ml_trader.config import Config as config
 
 from pprint import pprint
 from alpha_vantage.timeseries import TimeSeries

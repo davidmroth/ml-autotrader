@@ -1,8 +1,7 @@
 import time
 import numpy as np
 
-import ml_trader.config as config
-import ml_trader.utils.data.meta as meta
+import ml_trader.utils as utils
 import ml_trader.utils.logic as trade_logic
 
 from ml_trader.models.technical import Technical_Model
@@ -10,7 +9,7 @@ from ml_trader.utils import compute
 from ml_trader.utils.analysis.plot import Plot
 from ml_trader.utils.file import timestamp
 from ml_trader.utils.data import Preprocess
-import ml_trader.utils as utils
+from ml_trader.config import Config as config
 
 
 '''

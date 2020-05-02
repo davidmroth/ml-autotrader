@@ -5,9 +5,8 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 import ml_trader.utils as utils
-import ml_trader.config as config
+from ml_trader.config import Config as config
 import ml_trader.utils.file as file
-import ml_trader.utils.data.meta as meta
 
 
 years = mdates.YearLocator()   # every year
@@ -21,7 +20,7 @@ def format_price( p ):
 class Plot:
     def __init__( self, name, legend=None, xlabel=None, ylabel=None, scalers=False  ):
         if scalers:
-            self.y_scaler = scalers[meta.label_column]
+            self.y_scaler = scalers[config.label_column]
         self.xlabel = xlabel
         self.ylabel = ylabel
         self.name = name

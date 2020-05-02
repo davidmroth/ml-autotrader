@@ -7,7 +7,7 @@ import pandas as pd
 from datetime import datetime, timedelta, date
 from dateutil import rrule
 
-import ml_trader.config as config
+from ml_trader.config import Config as config
 
 
 class DateManager:

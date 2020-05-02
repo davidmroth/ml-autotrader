@@ -3,9 +3,8 @@ import datetime
 import numpy as np
 
 import ml_trader.utils.file as file
-import ml_trader.config as config
-import ml_trader.utils.data.meta as meta
 
+from ml_trader.config import Config as config
 from ml_trader.models.importance_sampling.training import ImportanceTraining
 
 
@@ -18,7 +17,7 @@ class Technical_Model:
 
         # Used to invert normalision applied to predictions
         self.data_scalers = data_scalers
-        self.data_column_size = len( meta.column_index )
+        self.data_column_size = len( config.column_index )
 
     def build( self ):
         print( " **Initializing model..." )
@@ -126,7 +125,7 @@ class Technical_Model:
         wildly around the regression line, so 6.08 is as good as it gets (and is in
         fact, the line of best fit).
         '''
-        unscaled_y_test = self.data_scalers[meta.label_column].inverse_transform( y_test )
+        unscaled_y_test = self.data_scalers[config.label_column].inverse_transform( y_test )
         real_mse = np.mean( np.square( unscaled_y_test - y_hat_test ) )
         return real_mse / ( np.max( unscaled_y_test ) - np.min( unscaled_y_test ) ) * 100
 
@@ -149,7 +148,7 @@ class Technical_Model:
         twice as bad as being off by 5. But if being off by 10 is just twice as
         bad as being off by 5, then MAE is more appropriate.
         '''
-        unscaled_y_test = self.data_scalers[meta.label_column].inverse_transform( y_test )
+        unscaled_y_test = self.data_scalers[config.label_column].inverse_transform( y_test )
         return np.sqrt( ( ( y_hat_test - unscaled_y_test ) ** 2 ).mean() )
 
     def load( self ):
@@ -213,7 +212,7 @@ class Technical_Model:
 
     def predict( self, y ):
         y_hat = self.model.predict( y )
-        return self.data_scalers[meta.label_column].inverse_transform( y_hat )
+        return self.data_scalers[config.label_column].inverse_transform( y_hat )
 
     def predict_raw( self, y ):
         return self.model.predict( y )

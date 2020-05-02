@@ -1,8 +1,11 @@
 #!/bin/bash
 
 
+DOCKER_BIN=docker
+DOCKER_ARGS="run -it -p 8081:8080 -v $(pwd):/app/ -v $(pwd)/data/tensorboard:/tmp/tensorboard python:stock-ml"
+
 if test $# -gt 0; then
-	docker run -it -p 8080:8080 -v $(pwd):/app/ python:stock-ml $@
+	$DOCKER_BIN $DOCKER_ARGS $@
 else
-	docker run -it -p 8080:8080 -v $(pwd):/app/ python:stock-ml python train.py
+	$DOCKER_BIN $DOCKER_ARGS python train.py
 fi
